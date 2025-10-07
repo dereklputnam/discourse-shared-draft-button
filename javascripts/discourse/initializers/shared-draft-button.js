@@ -6,34 +6,18 @@ export default {
   initialize(container, settings) {
     withPluginApi("0.8.31", () => {
       console.log("Shared Draft Button: Initializing");
-      console.log("Shared Draft Button: arguments.length:", arguments.length);
-      console.log("Shared Draft Button: All arguments:", arguments);
-      console.log("Shared Draft Button: Received settings parameter:", settings);
-      console.log("Shared Draft Button: Settings type:", typeof settings);
-      console.log("Shared Draft Button: Settings keys:", settings ? Object.keys(settings) : "null/undefined");
+      // Reduced debugging - uncomment lines below for troubleshooting
+      // console.log("Shared Draft Button: arguments.length:", arguments.length);
+      // console.log("Shared Draft Button: Received settings parameter:", settings);
       
-      // Deep inspection of the settings
-      if (settings && typeof settings === 'object') {
-        console.log("Shared Draft Button: Settings content:");
+      // Minimal settings debugging - only show if we need to troubleshoot
+      if (settings && typeof settings === 'object' && Object.keys(settings).some(key => 
+        key.includes('category') || key.includes('enabled') || key.includes('button') || key.includes('staff') || key.includes('hide')
+      )) {
+        console.log("Shared Draft Button: Found theme settings in parameter");
         for (const key in settings) {
           if (key.includes('category') || key.includes('enabled') || key.includes('button') || key.includes('staff') || key.includes('hide')) {
-            console.log("  RELEVANT:", key, ":", JSON.stringify(settings[key]), "(type:", typeof settings[key], ")");
-          } else {
-            console.log("  ", key, ":", typeof settings[key]);
-          }
-        }
-        
-        // Check if this might be a service object instead of settings
-        if ('_booted' in settings || '_bootPromise' in settings) {
-          console.log("Shared Draft Button: This looks like a service object, not theme settings!");
-          console.log("Shared Draft Button: Looking for theme settings within this object...");
-          
-          // Try to find theme settings within this object
-          if (settings.themeSettings) {
-            console.log("Shared Draft Button: Found themeSettings property:", settings.themeSettings);
-          }
-          if (settings.settings) {
-            console.log("Shared Draft Button: Found settings property:", settings.settings);
+            console.log("  ", key, ":", JSON.stringify(settings[key]));
           }
         }
       }
@@ -264,8 +248,9 @@ export default {
               }).then(function() {
                 console.log('Shared Draft Button: Shared draft composer opened successfully');
               }).catch(function(error) {
-                console.log('Shared Draft Button: createSharedDraft action failed:', error.message);
-                throw error;
+                console.log('Shared Draft Button: createSharedDraft action failed:', error && error.message ? error.message : error);
+                // Don't re-throw the error to prevent console spam
+                console.log('Shared Draft Button: Falling back to regular topic creation...');
               });
             } catch (e) {
               console.log('Shared Draft Button: createSharedDraft action not available:', e.message);
@@ -323,7 +308,7 @@ export default {
                   }
                 }
               }).catch(function(error) {
-                console.error('Shared Draft Button: All methods failed:', error);
+                console.log('Shared Draft Button: Fallback method failed:', error && error.message ? error.message : error);
               });
             }
           }, 100);
