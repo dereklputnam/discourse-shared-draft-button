@@ -160,8 +160,8 @@ export default {
         
         console.log('Shared Draft Button: Creating shared draft...');
         
-        // SECURITY: Double-check permissions before opening composer
-        if (!canUserCreateInCategory()) {
+        // Double-check permissions before opening composer (if enabled)
+        if (settings.respect_category_permissions && !canUserCreateInCategory()) {
           console.error('Shared Draft Button: Permission check failed, blocking shared draft creation');
           return;
         }
@@ -354,10 +354,19 @@ export default {
             console.log('Shared Draft Button: Category permissions - can_create_topic:', category.can_create_topic);
             console.log('Shared Draft Button: Category permissions - permission:', category.permission);
             
-            // Check if user can create topics in this category - be strict about permissions
-            const canCreate = category.can_create_topic === true;
+            // Check if user can create topics in this category
+            // Note: can_create_topic might be true, undefined, or false
+            const canCreate = category.can_create_topic !== false;
             console.log('Shared Draft Button: User can create in category:', canCreate);
             console.log('Shared Draft Button: Raw can_create_topic value:', category.can_create_topic);
+            console.log('Shared Draft Button: Type of can_create_topic:', typeof category.can_create_topic);
+            
+            // Additional checks for more comprehensive permission validation
+            if (!canCreate) {
+              console.log('Shared Draft Button: can_create_topic is false, checking other category properties...');
+              console.log('Shared Draft Button: category.permission:', category.permission);
+              console.log('Shared Draft Button: category.details:', category.details);
+            }
             
             return canCreate;
           } else {
@@ -432,15 +441,15 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // SECURITY: Always check if user can create topics in this category
-        if (!canUserCreateInCategory()) {
-          console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
-          return false;
-        }
-        
-        // Additional check: respect the setting for extra permission validation
+        // Check permissions if the setting is enabled
         if (settings.respect_category_permissions) {
           console.log('Shared Draft Button: Category permission validation enabled');
+          if (!canUserCreateInCategory()) {
+            console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
+            return false;
+          }
+        } else {
+          console.log('Shared Draft Button: Category permission validation disabled, skipping permission check');
         }
         
         // Only override in target category (if specified)
