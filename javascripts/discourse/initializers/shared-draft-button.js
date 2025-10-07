@@ -318,8 +318,8 @@ export default {
         }
       }
 
-      // Function to check if user can see shared drafts (based on Discourse groups)
-      function canUserAccessSharedDrafts() {
+      // Function to check if user can create topics in the current category
+      function canUserCreateInCategory() {
         if (typeof Discourse === 'undefined') {
           return false;
         }
@@ -330,53 +330,40 @@ export default {
           return false;
         }
         
-        const siteSettings = Discourse.SiteSettings;
-        if (!siteSettings) {
-          console.log('Shared Draft Button: No site settings available, falling back to staff check');
-          return currentUser.staff;
+        // Get the current category ID
+        const categoryId = settings.enabled_category;
+        if (!categoryId) {
+          console.log('Shared Draft Button: No category configured, falling back to basic user check');
+          return !currentUser.anonymous;
         }
         
-        // Debug: Show all settings that contain 'shared' or 'draft'
-        const relevantSettings = Object.keys(siteSettings).filter(key => 
-          key.toLowerCase().includes('shared') || key.toLowerCase().includes('draft')
-        );
-        console.log('Shared Draft Button: Available shared/draft settings:', relevantSettings);
+        console.log('Shared Draft Button: Checking create permissions for category:', categoryId);
         
-        // Try different possible setting names
-        const possibleSettings = [
-          'shared_drafts_allowed_groups',
-          'shared_drafts_allowed_groups_map',
-          'shared_draft_allowed_groups',
-          'sharedDraftsAllowedGroups'
-        ];
-        
-        let allowedGroupsSetting = null;
-        for (const settingName of possibleSettings) {
-          if (siteSettings[settingName]) {
-            console.log('Shared Draft Button: Found setting:', settingName, '=', siteSettings[settingName]);
-            allowedGroupsSetting = siteSettings[settingName];
-            break;
+        try {
+          // Try to get the category from the store
+          const store = Discourse.__container__.lookup('service:store');
+          const category = store.peekRecord('category', categoryId);
+          
+          if (category) {
+            console.log('Shared Draft Button: Found category:', category.name);
+            console.log('Shared Draft Button: Category permissions - can_create_topic:', category.can_create_topic);
+            console.log('Shared Draft Button: Category permissions - permission:', category.permission);
+            
+            // Check if user can create topics in this category
+            const canCreate = category.can_create_topic !== false;
+            console.log('Shared Draft Button: User can create in category:', canCreate);
+            
+            return canCreate;
+          } else {
+            console.log('Shared Draft Button: Category not found in store, checking user permissions generally');
+            // If we can't find the category, check if user can generally create topics
+            return currentUser.can_create_topic !== false;
           }
+        } catch (e) {
+          console.log('Shared Draft Button: Error checking category permissions:', e.message);
+          // Fallback: check if user can generally create topics
+          return currentUser.can_create_topic !== false;
         }
-        
-        if (!allowedGroupsSetting) {
-          console.log('Shared Draft Button: No shared drafts allowed groups setting found, falling back to staff check');
-          return currentUser.staff;
-        }
-        
-        // Get the allowed group IDs from the found setting
-        const allowedGroupIds = allowedGroupsSetting.split('|').map(id => parseInt(id, 10));
-        console.log('Shared Draft Button: Shared drafts allowed group IDs:', allowedGroupIds);
-        
-        // Check if user is in any of the allowed groups
-        const userGroups = currentUser.groups || [];
-        const userGroupIds = userGroups.map(group => group.id);
-        console.log('Shared Draft Button: User group IDs:', userGroupIds);
-        
-        const hasAccess = allowedGroupIds.some(groupId => userGroupIds.includes(groupId));
-        console.log('Shared Draft Button: User can access shared drafts:', hasAccess);
-        
-        return hasAccess;
       }
 
       // Function to check if we should override the button
@@ -438,9 +425,9 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // Only override for users who can access shared drafts
-        if (settings.staff_only && !canUserAccessSharedDrafts()) {
-          console.log('Shared Draft Button: User cannot access shared drafts, skipping override');
+        // Only override for users who can create topics in this category
+        if (settings.staff_only && !canUserCreateInCategory()) {
+          console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
           return false;
         }
         
