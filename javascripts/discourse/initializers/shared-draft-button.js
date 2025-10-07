@@ -3,12 +3,13 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 export default {
   name: "shared-draft-button",
   
-  initialize(container) {
+  initialize(container, settings) {
     withPluginApi("0.8.31", () => {
       console.log("Shared Draft Button: Initializing");
+      console.log("Shared Draft Button: Received settings parameter:", settings);
 
       // Default settings
-      let settings = {
+      let finalSettings = {
         staff_only: true,
         button_text: "New Shared Draft", 
         enabled_category: "",
@@ -16,24 +17,50 @@ export default {
         hide_new_topic_button: false
       };
 
-      // Get theme settings
-      try {
-        const themeSettings = container.lookup("service:theme-settings");
-        if (themeSettings && Object.keys(themeSettings).length > 0) {
-          settings = Object.assign({}, settings, themeSettings);
-          console.log("Shared Draft Button: Loaded theme settings successfully");
+      // Method 1: Use settings parameter directly (this is the standard way)
+      if (settings && typeof settings === 'object') {
+        finalSettings = Object.assign({}, finalSettings, settings);
+        console.log("Shared Draft Button: Loaded settings via parameter");
+      }
+
+      // Method 2: Fallback to service lookup if parameter method didn't work
+      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+        console.log("Shared Draft Button: Settings parameter didn't provide category, trying service lookup...");
+        
+        try {
+          const themeSettings = container.lookup("service:theme-settings");
+          console.log("Shared Draft Button: service:theme-settings result:", themeSettings);
+          if (themeSettings && typeof themeSettings === 'object') {
+            finalSettings = Object.assign({}, finalSettings, themeSettings);
+            console.log("Shared Draft Button: Loaded theme settings via service");
+          }
+        } catch (e) {
+          console.log("Shared Draft Button: service method failed:", e);
         }
-      } catch (e) {
-        console.log("Shared Draft Button: Could not access theme settings:", e);
       }
 
-      // Ensure we have the theme settings
-      if (!settings.enabled_category || settings.enabled_category === "") {
-        console.log("Shared Draft Button: No enabled category configured in theme settings");
+      // Method 3: Try global access as last resort
+      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+        console.log("Shared Draft Button: Still no category, trying global access...");
+        
+        try {
+          if (typeof window !== 'undefined' && window.I18n && window.I18n.t) {
+            // Sometimes settings are available through theme registry
+            const themeId = document.querySelector('meta[name="discourse-theme-id"]');
+            if (themeId) {
+              console.log("Shared Draft Button: Found theme ID:", themeId.content);
+            }
+          }
+        } catch (e) {
+          console.log("Shared Draft Button: global access failed:", e);
+        }
       }
 
-      console.log("Shared Draft Button: Final settings being used:", settings);
-      console.log("Shared Draft Button: enabled_category value:", JSON.stringify(settings.enabled_category), "type:", typeof settings.enabled_category);
+      console.log("Shared Draft Button: Final settings being used:", finalSettings);
+      console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
+
+      // Use finalSettings instead of settings for the rest of the code
+      settings = finalSettings;
 
       // Function to create shared draft - exact copy of your working approach
       function createSharedDraft(event) {
