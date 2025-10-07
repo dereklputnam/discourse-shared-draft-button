@@ -159,9 +159,14 @@ export default {
         
         console.log('Shared Draft Button: Creating shared draft...');
         
-        // Double-check shared draft permissions before opening composer
+        // Double-check permissions before opening composer
         if (!canUserAccessSharedDrafts()) {
           console.error('Shared Draft Button: Shared draft permission check failed, blocking creation');
+          return;
+        }
+        
+        if (!canUserCreateInCategory()) {
+          console.error('Shared Draft Button: Category permission check failed, blocking creation');
           return;
         }
         
@@ -373,6 +378,54 @@ export default {
         }
       }
 
+      // Function to check if user can create topics in the category
+      function canUserCreateInCategory() {
+        if (typeof Discourse === 'undefined') {
+          return false;
+        }
+        
+        const currentUser = Discourse.User.current();
+        if (!currentUser) {
+          console.log('Shared Draft Button: No current user for category check');
+          return false;
+        }
+        
+        // Get the current category ID
+        const categoryId = settings.enabled_category;
+        if (!categoryId) {
+          console.log('Shared Draft Button: No category configured for permission check');
+          return true; // If no category specified, don't restrict
+        }
+        
+        console.log('Shared Draft Button: Checking category creation permissions for category:', categoryId);
+        
+        try {
+          // Try to get the category from the store
+          const store = Discourse.__container__.lookup('service:store');
+          const category = store.peekRecord('category', categoryId);
+          
+          if (category) {
+            console.log('Shared Draft Button: Found category:', category.name);
+            console.log('Shared Draft Button: Category can_create_topic:', category.can_create_topic);
+            
+            // Check if user can create topics in this category
+            // Note: can_create_topic might be true, undefined (allowed), or false (denied)
+            const canCreate = category.can_create_topic !== false;
+            console.log('Shared Draft Button: User can create topics in category:', canCreate);
+            
+            return canCreate;
+          } else {
+            console.log('Shared Draft Button: Category not found in store, allowing access');
+            // If we can't find the category, don't restrict (fail open for usability)
+            return true;
+          }
+        } catch (e) {
+          console.log('Shared Draft Button: Error checking category permissions:', e.message);
+          // Fallback: allow access if we can't check (fail open for usability)
+          return true;
+        }
+      }
+
       // Function to check if we should override the button
       function shouldOverrideButton() {
         console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(settings.enabled_category));
@@ -432,9 +485,14 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // Always check shared draft permissions (uses Discourse's built-in permission system)
+        // Check both shared draft permissions and category permissions
         if (!canUserAccessSharedDrafts()) {
           console.log('Shared Draft Button: User is not in shared drafts allowed groups, skipping override');
+          return false;
+        }
+        
+        if (!canUserCreateInCategory()) {
+          console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
           return false;
         }
         
