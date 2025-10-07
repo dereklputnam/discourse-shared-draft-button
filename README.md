@@ -39,11 +39,11 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ## Permission System
 
-The component uses Discourse's built-in shared draft permission system:
+The component uses Discourse's category permission system:
 
-- **Shared Draft Permissions**: Only users in the "Shared drafts allowed groups" can see and use the button
-- **Automatic Integration**: Uses the same permission system as Discourse's native shared drafts functionality
-- **No Additional Configuration**: Permissions are managed through Admin → Settings → Shared drafts allowed groups
+- **Category Permissions**: Only users who can create topics in the configured category can see and use the button
+- **Simple and Direct**: Uses the same permission system as regular topic creation
+- **No Additional Configuration**: Permissions are managed through your existing category security settings
 
 ## Requirements
 
@@ -54,7 +54,7 @@ The component uses Discourse's built-in shared draft permission system:
 ## How It Works
 
 1. **Category Detection**: Detects when a user is viewing the specific configured category using multiple methods (URL, DOM elements, CSS classes)
-2. **Permission Check**: Verifies the user is in the "Shared drafts allowed groups" setting
+2. **Permission Check**: Verifies the user can create topics in the configured category
 3. **Button Override**: Replaces the "New Topic" button text and click behavior
 4. **Composer Integration**: Opens the Discourse composer in shared draft mode
 5. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
@@ -72,9 +72,9 @@ The component uses Discourse's built-in shared draft permission system:
 - The component only supports one category at a time
 
 ### Permission Issues
-- The component uses Discourse's shared draft permission system
-- If users can't see the button, check Admin → Settings → Shared drafts allowed groups
-- Add the appropriate groups to the shared drafts allowed groups setting
+- The component uses Discourse's category permission system
+- If users can't see the button, check Admin → Categories → [Your Category] → Security
+- Add the appropriate groups to the category with "Create / Reply / See" permissions
 
 ### Composer Issues
 - Verify shared drafts are properly configured in your Discourse instance
