@@ -21,16 +21,11 @@ export default {
         hide_new_topic_button: false
       };
 
-      // TEMPORARY: Force the category to 170 for testing
-      finalSettings.enabled_category = "170";
-      console.log("Shared Draft Button: TEMPORARY - Hardcoded category to 170 for testing");
-      
       // Method 1: Use settings parameter directly (this is the standard way)
       if (settings && typeof settings === 'object') {
         finalSettings = Object.assign({}, finalSettings, settings);
         console.log("Shared Draft Button: Loaded settings via parameter");
-        // Don't override the hardcoded value for now
-        finalSettings.enabled_category = "170";
+        console.log("Shared Draft Button: Settings from parameter:", settings);
       }
 
       // Method 2: Fallback to service lookup if parameter method didn't work
@@ -335,15 +330,10 @@ export default {
         const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
         const metaHasCategory = categoryMeta && categoryMeta.content === targetCategoryId;
         
-        // TEMPORARY: Always return true when in category 170 for testing
-        const currentPath = window.location.pathname;
-        const isCat170 = currentPath.includes('/170') || currentPath.includes('/c/170') || document.body.className.includes('category-170');
-        
         console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory, 'Meta check:', metaHasCategory);
-        console.log('Shared Draft Button: Category 170 specific check:', isCat170);
         console.log('Shared Draft Button: Body classes:', document.body.className);
         
-        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory || isCat170;
+        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory;
         
         console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
         
