@@ -499,8 +499,11 @@ export default {
         
         if (!hasGroupAccess) {
           console.log('Shared Draft Button: User is not in allowed groups, skipping override');
+          console.log('Shared Draft Button: CRITICAL - Should NOT override button, returning false');
           return false;
         }
+        
+        console.log('Shared Draft Button: User passed group check, continuing to category check');
         
         // Check if user can create topics in this category
         if (!canUserCreateInCategory()) {
@@ -573,19 +576,26 @@ export default {
         console.log('Shared Draft Button: Starting initialization...');
         
         // Try immediately
-        if (overrideNewTopicButton()) {
+        const result1 = overrideNewTopicButton();
+        console.log('Shared Draft Button: First attempt result:', result1);
+        if (result1) {
+          console.log('Shared Draft Button: First attempt succeeded, stopping');
           return;
         }
         
         // Try after 1 second
         setTimeout(function() {
-          if (overrideNewTopicButton()) {
+          const result2 = overrideNewTopicButton();
+          console.log('Shared Draft Button: Second attempt result:', result2);
+          if (result2) {
+            console.log('Shared Draft Button: Second attempt succeeded, stopping');
             return;
           }
           
           // Try after 3 seconds
           setTimeout(function() {
-            overrideNewTopicButton();
+            const result3 = overrideNewTopicButton();
+            console.log('Shared Draft Button: Third attempt result:', result3);
           }, 3000);
         }, 1000);
       }
