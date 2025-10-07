@@ -161,8 +161,8 @@ export default {
         console.log('Shared Draft Button: Creating shared draft...');
         
         // Double-check permissions before opening composer (if enabled)
-        if (settings.respect_category_permissions && !canUserCreateInCategory()) {
-          console.error('Shared Draft Button: Permission check failed, blocking shared draft creation');
+        if (settings.respect_category_permissions && !canUserAccessSharedDrafts()) {
+          console.error('Shared Draft Button: Shared draft permission check failed, blocking creation');
           return;
         }
         
@@ -323,8 +323,8 @@ export default {
         }
       }
 
-      // Function to check if user can create topics in the current category
-      function canUserCreateInCategory() {
+      // Function to check if user can access shared drafts (based on shared drafts allowed groups)
+      function canUserAccessSharedDrafts() {
         if (typeof Discourse === 'undefined') {
           return false;
         }
@@ -335,50 +335,42 @@ export default {
           return false;
         }
         
-        // Get the current category ID
-        const categoryId = settings.enabled_category;
-        if (!categoryId) {
-          console.log('Shared Draft Button: No category configured, falling back to basic user check');
-          return !currentUser.anonymous;
+        const siteSettings = Discourse.SiteSettings;
+        if (!siteSettings) {
+          console.log('Shared Draft Button: No site settings available');
+          return false;
         }
         
-        console.log('Shared Draft Button: Checking create permissions for category:', categoryId);
+        // Find the shared drafts allowed groups setting
+        const allowedGroupsSetting = siteSettings.shared_drafts_allowed_groups;
+        
+        if (!allowedGroupsSetting) {
+          console.log('Shared Draft Button: No shared_drafts_allowed_groups setting found');
+          // Fallback: check if user is staff
+          return currentUser.staff;
+        }
+        
+        console.log('Shared Draft Button: Found shared_drafts_allowed_groups:', allowedGroupsSetting);
         
         try {
-          // Try to get the category from the store
-          const store = Discourse.__container__.lookup('service:store');
-          const category = store.peekRecord('category', categoryId);
+          // Parse the group names (they're stored as names, not IDs in this setting)
+          const allowedGroupNames = allowedGroupsSetting.split('|');
+          console.log('Shared Draft Button: Allowed group names:', allowedGroupNames);
           
-          if (category) {
-            console.log('Shared Draft Button: Found category:', category.name);
-            console.log('Shared Draft Button: Category permissions - can_create_topic:', category.can_create_topic);
-            console.log('Shared Draft Button: Category permissions - permission:', category.permission);
-            
-            // Check if user can create topics in this category
-            // Note: can_create_topic might be true, undefined, or false
-            const canCreate = category.can_create_topic !== false;
-            console.log('Shared Draft Button: User can create in category:', canCreate);
-            console.log('Shared Draft Button: Raw can_create_topic value:', category.can_create_topic);
-            console.log('Shared Draft Button: Type of can_create_topic:', typeof category.can_create_topic);
-            
-            // Additional checks for more comprehensive permission validation
-            if (!canCreate) {
-              console.log('Shared Draft Button: can_create_topic is false, checking other category properties...');
-              console.log('Shared Draft Button: category.permission:', category.permission);
-              console.log('Shared Draft Button: category.details:', category.details);
-            }
-            
-            return canCreate;
-          } else {
-            console.log('Shared Draft Button: Category not found in store - this is a security issue, denying access');
-            // If we can't find the category, deny access for security
-            return false;
-          }
+          // Get user's groups
+          const userGroups = currentUser.groups || [];
+          const userGroupNames = userGroups.map(group => group.name);
+          console.log('Shared Draft Button: User group names:', userGroupNames);
+          
+          // Check if user is in any of the allowed groups
+          const hasAccess = allowedGroupNames.some(groupName => userGroupNames.includes(groupName));
+          console.log('Shared Draft Button: User has shared draft access:', hasAccess);
+          
+          return hasAccess;
         } catch (e) {
-          console.log('Shared Draft Button: Error checking category permissions:', e.message);
-          // Fallback: deny access for security when we can't check permissions
-          console.log('Shared Draft Button: Denying access due to permission check failure');
-          return false;
+          console.log('Shared Draft Button: Error checking shared draft permissions:', e.message);
+          // Fallback to staff check
+          return currentUser.staff;
         }
       }
 
@@ -443,13 +435,13 @@ export default {
         
         // Check permissions if the setting is enabled
         if (settings.respect_category_permissions) {
-          console.log('Shared Draft Button: Category permission validation enabled');
-          if (!canUserCreateInCategory()) {
-            console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
+          console.log('Shared Draft Button: Shared draft permission validation enabled');
+          if (!canUserAccessSharedDrafts()) {
+            console.log('Shared Draft Button: User is not in shared drafts allowed groups, skipping override');
             return false;
           }
         } else {
-          console.log('Shared Draft Button: Category permission validation disabled, skipping permission check');
+          console.log('Shared Draft Button: Permission validation disabled, skipping permission check');
         }
         
         // Only override in target category (if specified)
