@@ -502,8 +502,18 @@ export default {
         console.log('Shared Draft Button: Group access check result:', hasGroupAccess);
         
         if (!hasGroupAccess) {
-          console.log('Shared Draft Button: User is not in allowed groups, skipping override');
-          console.log('Shared Draft Button: CRITICAL - Should NOT override button, returning false');
+          console.log('Shared Draft Button: User is not in allowed groups, hiding the button entirely');
+          
+          // Find and hide the create topic button for unapproved users
+          const createTopicButton = document.querySelector('#create-topic');
+          if (createTopicButton) {
+            console.log('Shared Draft Button: Found create topic button, hiding it for unapproved user');
+            createTopicButton.style.display = 'none';
+            createTopicButton.dataset.hiddenBySharedDraftComponent = 'true';
+          } else {
+            console.log('Shared Draft Button: Create topic button not found for hiding');
+          }
+          
           return false;
         }
         
@@ -628,7 +638,18 @@ export default {
         
         if (shouldCheck) {
           console.log('Shared Draft Button: DOM changed, checking for button...');
-          setTimeout(overrideNewTopicButton, 100);
+          setTimeout(function() {
+            overrideNewTopicButton();
+            // Also check if we need to hide newly added buttons for unapproved users
+            if (!isUserInAllowedGroups()) {
+              const createTopicButton = document.querySelector('#create-topic');
+              if (createTopicButton && !createTopicButton.dataset.hiddenBySharedDraftComponent) {
+                console.log('Shared Draft Button: Hiding newly added button for unapproved user');
+                createTopicButton.style.display = 'none';
+                createTopicButton.dataset.hiddenBySharedDraftComponent = 'true';
+              }
+            }
+          }, 100);
         }
       });
 
