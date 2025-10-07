@@ -6,6 +6,7 @@ export default {
   initialize(container, settings) {
     withPluginApi("0.8.31", () => {
       console.log("Shared Draft Button: Initializing - VERSION 2024-01-07-GROUP-DEBUGGING");
+      console.log("Shared Draft Button: CRITICAL DEBUG - This should appear if new version loaded");
       // Reduced debugging - uncomment lines below for troubleshooting
       // console.log("Shared Draft Button: arguments.length:", arguments.length);
       // console.log("Shared Draft Button: Received settings parameter:", settings);
