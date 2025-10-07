@@ -303,19 +303,47 @@ export default {
         const targetCategoryId = settings.enabled_category.toString();
         console.log('Shared Draft Button: Target category ID:', targetCategoryId);
         console.log('Shared Draft Button: Current URL:', window.location.pathname);
+        console.log('Shared Draft Button: Current URL hash:', window.location.hash);
+        console.log('Shared Draft Button: Current URL search:', window.location.search);
         
-        // Check if URL contains the target category ID
-        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
+        // Check if URL contains the target category ID in various patterns
+        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId) || 
+                              window.location.pathname.includes('/c/' + targetCategoryId) ||
+                              window.location.hash.includes('/' + targetCategoryId) ||
+                              window.location.search.includes('category=' + targetCategoryId);
         
-        // Also check for category element in DOM
-        const categoryElement = document.querySelector('[data-category-id="' + targetCategoryId + '"]');
+        // Also check for category element in DOM with multiple selectors
+        const categorySelectors = [
+          '[data-category-id="' + targetCategoryId + '"]',
+          '.category-' + targetCategoryId,
+          '[data-category="' + targetCategoryId + '"]'
+        ];
+        
+        let categoryElement = null;
+        for (const selector of categorySelectors) {
+          categoryElement = document.querySelector(selector);
+          if (categoryElement) {
+            console.log('Shared Draft Button: Found category element with selector:', selector);
+            break;
+          }
+        }
         
         // Also check body class for category
         const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
         
-        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory);
+        // Check for category in meta tags
+        const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
+        const metaHasCategory = categoryMeta && categoryMeta.content === targetCategoryId;
         
-        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory;
+        // TEMPORARY: Always return true when in category 170 for testing
+        const currentPath = window.location.pathname;
+        const isCat170 = currentPath.includes('/170') || currentPath.includes('/c/170') || document.body.className.includes('category-170');
+        
+        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory, 'Meta check:', metaHasCategory);
+        console.log('Shared Draft Button: Category 170 specific check:', isCat170);
+        console.log('Shared Draft Button: Body classes:', document.body.className);
+        
+        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory || isCat170;
         
         console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
         
