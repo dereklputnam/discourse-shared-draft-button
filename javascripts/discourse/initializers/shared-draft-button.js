@@ -23,7 +23,7 @@ export default {
           staff_only: true,
           require_shared_drafts_enabled: true,
           button_text: "New Shared Draft",
-          enabled_categories: "",
+          enabled_category: "",
           hide_new_topic_button: false
         };
 
@@ -60,14 +60,10 @@ export default {
           }
           
           // Check category restrictions
-          if (settings.enabled_categories && settings.enabled_categories.length > 0) {
-            const enabledCategoryIds = settings.enabled_categories
-              .toString()
-              .split(",")
-              .map(id => parseInt(id.trim()))
-              .filter(id => !isNaN(id));
+          if (settings.enabled_category) {
+            const enabledCategoryId = parseInt(settings.enabled_category);
             
-            if (categoryId && enabledCategoryIds.length > 0 && !enabledCategoryIds.includes(categoryId)) {
+            if (categoryId && !isNaN(enabledCategoryId) && categoryId !== enabledCategoryId) {
               return false;
             }
           }
