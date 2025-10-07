@@ -16,7 +16,25 @@ export default {
       if (settings && typeof settings === 'object') {
         console.log("Shared Draft Button: Settings content:");
         for (const key in settings) {
-          console.log("  ", key, ":", JSON.stringify(settings[key]), "(type:", typeof settings[key], ")");
+          if (key.includes('category') || key.includes('enabled') || key.includes('button') || key.includes('staff') || key.includes('hide')) {
+            console.log("  RELEVANT:", key, ":", JSON.stringify(settings[key]), "(type:", typeof settings[key], ")");
+          } else {
+            console.log("  ", key, ":", typeof settings[key]);
+          }
+        }
+        
+        // Check if this might be a service object instead of settings
+        if ('_booted' in settings || '_bootPromise' in settings) {
+          console.log("Shared Draft Button: This looks like a service object, not theme settings!");
+          console.log("Shared Draft Button: Looking for theme settings within this object...");
+          
+          // Try to find theme settings within this object
+          if (settings.themeSettings) {
+            console.log("Shared Draft Button: Found themeSettings property:", settings.themeSettings);
+          }
+          if (settings.settings) {
+            console.log("Shared Draft Button: Found settings property:", settings.settings);
+          }
         }
       }
 
@@ -377,11 +395,23 @@ export default {
           return false;
         }
         
-        // Find the create topic button
-        const createTopicButton = document.querySelector('#create-topic');
+        // Find the create topic button with better error handling
+        let createTopicButton = null;
+        try {
+          createTopicButton = document.querySelector('#create-topic');
+        } catch (e) {
+          console.log('Shared Draft Button: Error finding create topic button:', e);
+          return false;
+        }
         
         if (!createTopicButton) {
           console.log('Shared Draft Button: Create topic button not found');
+          return false;
+        }
+        
+        // Additional safety checks
+        if (!createTopicButton.hasAttribute) {
+          console.log('Shared Draft Button: Create topic button missing hasAttribute method');
           return false;
         }
         
