@@ -28,7 +28,7 @@ After installation, configure the component in Admin → Customize → Themes �
 
 - **Enabled Category** *(required)*: Enter the single category ID where the Shared Draft button should appear. Only one category is supported.
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
-- **Allowed Groups** *(optional)*: Enter group names separated by commas (e.g. `staff,product_marketing,support_team`). Leave empty to show for all users who can create topics in the category.
+- **Allowed Groups** *(optional)*: Select groups from the dropdown that can see the Shared Draft button. Leave empty to show for all users who can create topics in the category.
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
 ## How to Find Your Category ID

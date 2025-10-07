@@ -9,9 +9,10 @@ button_text:
   description: "Text to display on the shared draft button"
 
 allowed_groups:
-  type: string
+  type: list
+  list_type: group
   default: ""
-  description: "Enter group names separated by commas (e.g. 'staff,product_marketing,support_team'). Leave empty to show for all users who can create topics in the category."
+  description: "Select which groups can see the Shared Draft button. Leave empty to show for all users who can create topics in the category."
 
 require_shared_drafts_enabled:
   type: bool
