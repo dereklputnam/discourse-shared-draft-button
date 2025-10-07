@@ -12,7 +12,7 @@ allowed_groups:
   type: list
   list_type: group
   default: ""
-  description: "Select which groups can see the Shared Draft button. Leave empty to show for all users who can create topics in the category."
+  description: "Select which groups can see the Shared Draft button. This hides the button for all other users - they can still view shared drafts but cannot create them. Leave empty to show for all users who can create topics in the category."
 
 require_shared_drafts_enabled:
   type: bool
