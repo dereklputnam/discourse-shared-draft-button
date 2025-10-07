@@ -1,0 +1,24 @@
+enabled_categories:
+  type: list
+  default: ""
+  description: "Enter category IDs where the Shared Draft button should appear (comma-separated). Leave empty to show on all categories."
+
+hide_new_topic_button:
+  type: bool
+  default: false
+  description: "Hide the standard 'New Topic' button when the Shared Draft button is shown"
+
+button_text:
+  type: string
+  default: "New Shared Draft"
+  description: "Text to display on the shared draft button"
+
+staff_only:
+  type: bool
+  default: true
+  description: "Only show the button to staff members"
+
+require_shared_drafts_enabled:
+  type: bool
+  default: true
+  description: "Only show the button when shared drafts are enabled in site settings"
