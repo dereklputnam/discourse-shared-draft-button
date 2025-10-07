@@ -85,10 +85,12 @@ export default {
                               container.lookup('site-settings:main');
           if (siteSettings && siteSettings.shared_drafts_category) {
             sharedDraftsCategoryId = siteSettings.shared_drafts_category;
-            console.log('Shared Draft Button: Using shared drafts category:', sharedDraftsCategoryId);
+            console.log('Shared Draft Button: Found shared drafts category in site settings:', sharedDraftsCategoryId, typeof sharedDraftsCategoryId);
+          } else {
+            console.log('Shared Draft Button: No shared drafts category found in site settings. Available settings:', Object.keys(siteSettings || {}));
           }
         } catch (e) {
-          console.log('Shared Draft Button: Could not get site settings for shared drafts category');
+          console.log('Shared Draft Button: Could not get site settings for shared drafts category:', e);
         }
         
         try {
@@ -155,8 +157,53 @@ export default {
               
               console.log('Shared Draft Button: Opening composer with options:', composerOpts);
               
-              composer.open(composerOpts).then(() => {
+              composer.open(composerOpts).then((model) => {
                 console.log('Shared Draft Button: Shared draft composer opened successfully');
+                
+                // Try to set the category after composer opens
+                if (model && sharedDraftsCategoryId) {
+                  setTimeout(() => {
+                    try {
+                      console.log('Shared Draft Button: Attempting to set category to:', sharedDraftsCategoryId);
+                      console.log('Shared Draft Button: Model properties available:', Object.keys(model));
+                      
+                      // For shared drafts, we might need to set the destination category
+                      const composerModel = composer.get('model');
+                      if (composerModel) {
+                        console.log('Shared Draft Button: Composer model properties:', Object.keys(composerModel));
+                        
+                        // Try different category property names
+                        if (composerModel.set) {
+                          composerModel.set('categoryId', sharedDraftsCategoryId);
+                          composerModel.set('category_id', sharedDraftsCategoryId);
+                          composerModel.set('destinationCategoryId', sharedDraftsCategoryId);
+                          composerModel.set('destination_category_id', sharedDraftsCategoryId);
+                          console.log('Shared Draft Button: Set all category properties on composer model');
+                        }
+                      }
+                      
+                      // Try setting on the model parameter as well
+                      if (model.set) {
+                        model.set('categoryId', sharedDraftsCategoryId);
+                        model.set('category_id', sharedDraftsCategoryId);
+                        model.set('destinationCategoryId', sharedDraftsCategoryId);
+                        model.set('destination_category_id', sharedDraftsCategoryId);
+                        console.log('Shared Draft Button: Set all category properties on returned model');
+                      }
+                      
+                      // Try to trigger UI update
+                      if (model.categoryChanged) {
+                        model.categoryChanged();
+                      }
+                      if (composerModel && composerModel.categoryChanged) {
+                        composerModel.categoryChanged();
+                      }
+                      
+                    } catch (e) {
+                      console.log('Shared Draft Button: Error setting category after composer open:', e);
+                    }
+                  }, 500);
+                }
               }).catch(() => {
                 console.log('Shared Draft Button: createSharedDraft action failed, trying fallback');
                 fallbackToRegularTopic(composer, sharedDraftsCategoryId);
