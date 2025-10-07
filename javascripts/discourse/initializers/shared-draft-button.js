@@ -33,6 +33,7 @@ export default {
       }
 
       console.log("Shared Draft Button: Final settings being used:", settings);
+      console.log("Shared Draft Button: enabled_category value:", JSON.stringify(settings.enabled_category), "type:", typeof settings.enabled_category);
 
       // Function to create shared draft - exact copy of your working approach
       function createSharedDraft(event) {
@@ -201,12 +202,17 @@ export default {
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
+        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(settings.enabled_category));
+        
         // If no category restriction is set, don't show anywhere
         if (!settings.enabled_category || settings.enabled_category === "") {
+          console.log('Shared Draft Button: No enabled category - returning false');
           return false;
         }
         
         const targetCategoryId = settings.enabled_category.toString();
+        console.log('Shared Draft Button: Target category ID:', targetCategoryId);
+        console.log('Shared Draft Button: Current URL:', window.location.pathname);
         
         // Check if URL contains the target category ID
         const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
@@ -217,11 +223,11 @@ export default {
         // Also check body class for category
         const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
         
+        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory);
+        
         const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory;
         
-        if (shouldOverride) {
-          console.log('Shared Draft Button: Button will show on category', targetCategoryId);
-        }
+        console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
         
         return shouldOverride;
       }
