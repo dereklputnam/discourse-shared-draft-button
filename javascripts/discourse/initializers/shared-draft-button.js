@@ -150,12 +150,13 @@ export default {
 
       console.log("Shared Draft Button: Final settings being used:", finalSettings);
       console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
-      console.log("Shared Draft Button: DEBUGGING - All available settings keys:", Object.keys(finalSettings));
-      console.log("Shared Draft Button: DEBUGGING - Looking for group-related settings:");
-      for (const key in finalSettings) {
-        if (key.includes('group') || key.includes('allowed')) {
-          console.log("  Found setting:", key, "=", JSON.stringify(finalSettings[key]));
-        }
+      console.log("Shared Draft Button: allowed_groups value:", JSON.stringify(finalSettings.allowed_groups), "type:", typeof finalSettings.allowed_groups);
+      
+      // CRITICAL TEST: Try to manually set groups for testing
+      if (!finalSettings.allowed_groups || finalSettings.allowed_groups.trim() === "") {
+        console.log("Shared Draft Button: TESTING - Settings appear empty, manually setting test groups");
+        finalSettings.allowed_groups = "product_marketing,product_management,staff";
+        console.log("Shared Draft Button: TESTING - Set allowed_groups to:", finalSettings.allowed_groups);
       }
 
       // Use finalSettings instead of settings for the rest of the code
