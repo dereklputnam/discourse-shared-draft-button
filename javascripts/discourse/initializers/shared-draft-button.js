@@ -5,7 +5,7 @@ export default {
   
   initialize(container, settings) {
     withPluginApi("0.8.31", () => {
-      console.log("Shared Draft Button: Initializing");
+      console.log("Shared Draft Button: Initializing - VERSION 2024-01-07-GROUP-DEBUGGING");
       // Reduced debugging - uncomment lines below for troubleshooting
       // console.log("Shared Draft Button: arguments.length:", arguments.length);
       // console.log("Shared Draft Button: Received settings parameter:", settings);
@@ -482,6 +482,8 @@ export default {
       // Main function to override the New Topic button
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
+        console.log('Shared Draft Button: DEBUG - Current settings object:', settings);
+        console.log('Shared Draft Button: DEBUG - Version check - enhanced group debugging loaded');
         
         // Check if user is in allowed groups (if groups are specified)
         console.log('Shared Draft Button: About to check group permissions...');
