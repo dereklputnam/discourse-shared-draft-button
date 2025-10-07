@@ -24,11 +24,10 @@ export default {
 
       // Default settings
       let finalSettings = {
-        staff_only: true,
+        respect_category_permissions: true,
         button_text: "New Shared Draft", 
         enabled_category: "",
-        require_shared_drafts_enabled: true,
-        hide_new_topic_button: false
+        require_shared_drafts_enabled: true
       };
 
       // Method 1: Use settings parameter directly (this is the standard way)
@@ -426,7 +425,7 @@ export default {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
         // Only override for users who can create topics in this category
-        if (settings.staff_only && !canUserCreateInCategory()) {
+        if (settings.respect_category_permissions && !canUserCreateInCategory()) {
           console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
           return false;
         }

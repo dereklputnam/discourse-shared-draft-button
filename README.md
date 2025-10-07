@@ -1,66 +1,111 @@
-# Discourse Shared Draft Button Theme Component
+# Discourse Shared Draft Button
 
-A Discourse theme component that adds a "New Shared Draft" button to your forum, making it easier for staff to create shared drafts without having to go through the composer dropdown menu.
+A Discourse theme component that replaces the standard "New Topic" button with a "New Shared Draft" button in specific categories, making it easy for authorized users to create shared drafts for collaboration.
 
 ## Features
 
-- **Configurable Button Placement**: Choose where to display the button (navigation bar, topic list header, or both)
-- **Category Restriction**: Limit the shared draft button to a specific category
-- **Hide Standard New Topic Button**: Option to hide the regular "New Topic" button when shared draft button is shown
-- **Staff-Only Access**: Restrict button visibility to staff members only
-- **Customizable Button Text**: Change the button text to match your community's language
-- **Automatic Composer Integration**: Opens the composer directly in shared draft mode
+- **Category-specific**: Only appears in the category you configure
+- **Permission-aware**: Respects Discourse's existing category permissions
+- **Seamless integration**: Works with Discourse's built-in shared draft functionality
+- **Customizable button text**: Change the button text to match your needs
+- **Smart detection**: Automatically detects the current category and applies restrictions
+- **Composer integration**: Opens the composer in shared draft mode with the correct category pre-selected
+- **Enhanced error handling**: Robust error handling with comprehensive logging
 
 ## Installation
 
 1. Go to your Discourse Admin Panel → Customize → Themes
-2. Click "Install" → "From a git repository"
+2. Click "Install" → "From a Git Repository"
 3. Enter the repository URL: `https://github.com/dereklputnam/discourse-shared-draft-button`
-4. Click "Install"
-5. Enable the theme component on your active theme
+4. Install as a **Theme Component** (not a full theme)
+5. Add the component to your active theme
 
 ## Configuration
 
-After installation, you can configure the component through the theme settings:
+After installation, configure the component in Admin → Customize → Themes → [Your Theme] → Settings:
 
 ### Settings
 
-- **Enabled Category**: Enter the category ID where the button should appear. Leave empty to show on all categories.
-- **Hide New Topic Button**: Hide the standard "New Topic" button when shared draft button is shown
-- **Button Text**: Customize the text displayed on the button (default: "New Shared Draft")
-- **Staff Only**: Only show the button to staff members (recommended: true)
-- **Require Shared Drafts Enabled**: Only show when shared drafts are enabled in site settings (recommended: true)
+- **Enabled Category** *(required)*: Enter the category ID where the Shared Draft button should appear. Leave empty to show on all categories.
+- **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
+- **Respect Category Permissions** *(optional)*: Only show the button to users who have permission to create topics in the configured category (default: true)
+- **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
-#### Finding Category ID
+## How to Find Your Category ID
 
-To find the category ID for the settings:
-1. Go to your Discourse admin panel → Categories
-2. Click on a category to edit it
-3. Look at the URL - the number at the end is the category ID (e.g., `/admin/customize/categories/5` means category ID is `5`)
-4. Enter this single number in the "Enabled Category" setting
+1. Go to your Discourse site and navigate to the desired category
+2. Look at the URL - the category ID is the number at the end
+   - Example: `yoursite.com/c/category-name/123` → Category ID is `123`
+3. Alternatively, go to Admin → Categories and click on the category to see its ID in the URL
 
-## Prerequisites
+## Permission System
 
-- Discourse version 2.8.0 or higher
-- Shared drafts must be enabled in your site settings
-- A shared drafts category must be configured
+The component uses Discourse's existing permission system:
+
+- **Category Permissions**: If "Respect Category Permissions" is enabled (default), the button only appears for users who can create topics in the configured category
+- **Flexible Access**: This automatically includes staff, moderators, and any groups with create permissions in that category
+- **No Additional Configuration**: Uses your existing Discourse category security settings
+
+## Requirements
+
+- Discourse 3.0+ (uses modern plugin API)
+- Shared drafts must be enabled in your Discourse settings
+- Users must have topic creation permissions in the target category
 
 ## How It Works
 
-1. The component checks if the current user has permission to create shared drafts
-2. It verifies that shared drafts are enabled and properly configured
-3. It adds the button to the specified location(s) based on your settings
-4. When clicked, it opens the composer directly in shared draft mode
-5. The draft is automatically created in your configured shared drafts category
+1. **Category Detection**: Detects when a user is viewing the configured category using multiple methods (URL, DOM elements, CSS classes)
+2. **Permission Check**: Verifies the user can create topics in the category (if permission checking is enabled)
+3. **Button Override**: Replaces the "New Topic" button text and click behavior
+4. **Composer Integration**: Opens the Discourse composer in shared draft mode
+5. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
 
-## Styling
+## Troubleshooting
 
-This component uses standard Discourse button classes (`btn`, `btn-default`, `btn-primary`) and will automatically inherit your site's existing button styles. No additional CSS is included to ensure compatibility with your theme.
+### Button Not Appearing
+- Check that you're viewing the correct category (match the configured category ID)
+- Verify you have permission to create topics in that category
+- Ensure shared drafts are enabled in Admin → Settings → Features
+- Check browser console for debugging information
 
-## Support
+### Button Appearing Everywhere
+- Check the "Enabled Category" setting - it should contain a specific category ID
+- If left empty, the button will appear on all categories where you have permissions
 
-If you encounter any issues or have feature requests, please open an issue on the GitHub repository.
+### Permission Issues
+- The component respects your existing Discourse category permissions
+- If users can't see the button, check their permissions in Admin → Categories → [Your Category] → Security
+- Add the appropriate groups to the category with "Create / Reply / See" permissions
+
+### Composer Issues
+- Verify shared drafts are properly configured in your Discourse instance
+- Check that the configured category allows shared drafts
+- Ensure the category allows topic creation for the user
+- Check browser console for detailed error messages
+
+## Technical Details
+
+This theme component:
+- Uses Modern Discourse Plugin API (0.8.31+)
+- Written in ES6 JavaScript with comprehensive error handling
+- Leverages Discourse's container system for service access
+- Uses MutationObserver for dynamic content handling
+- Includes extensive debugging and logging capabilities
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see LICENSE file for details
+
+## Support
+
+For issues, feature requests, or contributions, please visit:
+https://github.com/dereklputnam/discourse-shared-draft-button
+
+## Changelog
+
+### Latest Version
+- Simplified permission system to use Discourse's category permissions
+- Removed unused "hide new topic button" setting
+- Enhanced error handling and logging
+- Improved category detection with multiple fallback methods
+- Better composer integration with category pre-selection

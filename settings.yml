@@ -3,20 +3,15 @@ enabled_category:
   default: ""
   description: "Enter the category ID where the Shared Draft button should appear. Leave empty to show on all categories."
 
-hide_new_topic_button:
-  type: bool
-  default: false
-  description: "Hide the standard 'New Topic' button when the Shared Draft button is shown"
-
 button_text:
   type: string
   default: "New Shared Draft"
   description: "Text to display on the shared draft button"
 
-staff_only:
+respect_category_permissions:
   type: bool
   default: true
-  description: "Only show the button to users who can create topics in the configured category (uses Discourse's category permissions)"
+  description: "Only show the button to users who have permission to create topics in the configured category"
 
 require_shared_drafts_enabled:
   type: bool
