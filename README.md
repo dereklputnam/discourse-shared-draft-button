@@ -25,15 +25,19 @@ After installation, you can configure the component through the theme settings:
 
 ### Settings
 
-- **Enabled Category**: Select the specific category where the button should appear. Leave empty to show on all categories.
+- **Enabled Category**: Enter the category ID where the button should appear. Leave empty to show on all categories.
 - **Hide New Topic Button**: Hide the standard "New Topic" button when shared draft button is shown
 - **Button Text**: Customize the text displayed on the button (default: "New Shared Draft")
 - **Staff Only**: Only show the button to staff members (recommended: true)
 - **Require Shared Drafts Enabled**: Only show when shared drafts are enabled in site settings (recommended: true)
 
-#### Selecting Categories
+#### Finding Category ID
 
-The category setting uses Discourse's built-in category selector, making it easy to choose which category should display the shared draft button. Simply select the desired category from the dropdown in the theme settings.
+To find the category ID for the settings:
+1. Go to your Discourse admin panel → Categories
+2. Click on a category to edit it
+3. Look at the URL - the number at the end is the category ID (e.g., `/admin/customize/categories/5` means category ID is `5`)
+4. Enter this single number in the "Enabled Category" setting
 
 ## Prerequisites
 

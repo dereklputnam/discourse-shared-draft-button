@@ -1,7 +1,7 @@
 enabled_category:
-  type: category
+  type: integer
   default: ""
-  description: "Select the category where the Shared Draft button should appear. Leave empty to show on all categories."
+  description: "Enter the category ID where the Shared Draft button should appear. Leave empty to show on all categories."
 
 hide_new_topic_button:
   type: bool
