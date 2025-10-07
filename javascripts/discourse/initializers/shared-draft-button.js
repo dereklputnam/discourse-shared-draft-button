@@ -11,6 +11,14 @@ export default {
       console.log("Shared Draft Button: Received settings parameter:", settings);
       console.log("Shared Draft Button: Settings type:", typeof settings);
       console.log("Shared Draft Button: Settings keys:", settings ? Object.keys(settings) : "null/undefined");
+      
+      // Deep inspection of the settings
+      if (settings && typeof settings === 'object') {
+        console.log("Shared Draft Button: Settings content:");
+        for (const key in settings) {
+          console.log("  ", key, ":", JSON.stringify(settings[key]), "(type:", typeof settings[key], ")");
+        }
+      }
 
       // Default settings
       let finalSettings = {
@@ -26,6 +34,19 @@ export default {
         finalSettings = Object.assign({}, finalSettings, settings);
         console.log("Shared Draft Button: Loaded settings via parameter");
         console.log("Shared Draft Button: Settings from parameter:", settings);
+        console.log("Shared Draft Button: finalSettings after merge:", finalSettings);
+        
+        // Special check: if enabled_category is still empty but we saw it in the detailed logs
+        if ((!finalSettings.enabled_category || finalSettings.enabled_category === "") && settings.enabled_category) {
+          finalSettings.enabled_category = settings.enabled_category;
+          console.log("Shared Draft Button: Manually set enabled_category from settings:", settings.enabled_category);
+        }
+        
+        // TEMPORARY: If we're still not getting the category, hardcode it for now since we know it should be 170
+        if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+          console.log("Shared Draft Button: FALLBACK - Settings still empty, using hardcoded 170");
+          finalSettings.enabled_category = "170";
+        }
       }
 
       // Method 2: Fallback to service lookup if parameter method didn't work
