@@ -6,7 +6,11 @@ export default {
   initialize(container, settings) {
     withPluginApi("0.8.31", () => {
       console.log("Shared Draft Button: Initializing");
+      console.log("Shared Draft Button: arguments.length:", arguments.length);
+      console.log("Shared Draft Button: All arguments:", arguments);
       console.log("Shared Draft Button: Received settings parameter:", settings);
+      console.log("Shared Draft Button: Settings type:", typeof settings);
+      console.log("Shared Draft Button: Settings keys:", settings ? Object.keys(settings) : "null/undefined");
 
       // Default settings
       let finalSettings = {
@@ -39,20 +43,73 @@ export default {
         }
       }
 
-      // Method 3: Try global access as last resort
+      // Method 3: Try accessing settings via the container with theme name
       if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
-        console.log("Shared Draft Button: Still no category, trying global access...");
+        console.log("Shared Draft Button: Still no category, trying theme-specific lookup...");
         
         try {
-          if (typeof window !== 'undefined' && window.I18n && window.I18n.t) {
-            // Sometimes settings are available through theme registry
-            const themeId = document.querySelector('meta[name="discourse-theme-id"]');
-            if (themeId) {
-              console.log("Shared Draft Button: Found theme ID:", themeId.content);
+          // Try different theme settings service names
+          const themeSettingsServices = [
+            "theme-settings:discourse-shared-draft-button",
+            "theme-settings:shared-draft-button", 
+            "settings:theme",
+            "service:theme-settings"
+          ];
+          
+          for (const serviceName of themeSettingsServices) {
+            try {
+              console.log("Shared Draft Button: Trying service:", serviceName);
+              const themeSettings = container.lookup(serviceName);
+              console.log("Shared Draft Button:", serviceName, "result:", themeSettings);
+              if (themeSettings && typeof themeSettings === 'object' && themeSettings.enabled_category) {
+                finalSettings = Object.assign({}, finalSettings, themeSettings);
+                console.log("Shared Draft Button: Successfully loaded settings via", serviceName);
+                break;
+              }
+            } catch (e) {
+              console.log("Shared Draft Button:", serviceName, "failed:", e.message);
             }
           }
         } catch (e) {
-          console.log("Shared Draft Button: global access failed:", e);
+          console.log("Shared Draft Button: theme-specific lookup failed:", e);
+        }
+      }
+      
+      // Method 4: Try accessing theme settings from Discourse.__container__
+      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+        console.log("Shared Draft Button: Still no category, trying Discourse container...");
+        
+        try {
+          if (typeof Discourse !== 'undefined' && Discourse.__container__) {
+            console.log("Shared Draft Button: Discourse container available");
+            
+            // List all available services to see what's there
+            const services = Discourse.__container__.cache || {};
+            console.log("Shared Draft Button: Available services:", Object.keys(services).filter(k => k.includes('theme') || k.includes('settings')));
+            
+            // Try multiple service lookups
+            const serviceAttempts = [
+              "service:theme-settings", 
+              "theme-settings:main",
+              "theme:settings"
+            ];
+            
+            for (const service of serviceAttempts) {
+              try {
+                const result = Discourse.__container__.lookup(service);
+                console.log("Shared Draft Button: Discourse", service, "result:", result);
+                if (result && typeof result === 'object' && result.enabled_category) {
+                  finalSettings = Object.assign({}, finalSettings, result);
+                  console.log("Shared Draft Button: Successfully loaded via Discourse", service);
+                  break;
+                }
+              } catch (e) {
+                console.log("Shared Draft Button: Discourse", service, "failed:", e.message);
+              }
+            }
+          }
+        } catch (e) {
+          console.log("Shared Draft Button: Discourse container access failed:", e);
         }
       }
 
