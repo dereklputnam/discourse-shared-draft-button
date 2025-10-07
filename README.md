@@ -28,6 +28,7 @@ After installation, configure the component in Admin → Customize → Themes �
 
 - **Enabled Category** *(required)*: Enter the single category ID where the Shared Draft button should appear. Only one category is supported.
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
+- **Allowed Groups** *(optional)*: Enter group names separated by commas (e.g. `staff,product_marketing,support_team`). Leave empty to show for all users who can create topics in the category.
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
 ## How to Find Your Category ID
@@ -39,11 +40,11 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ## Permission System
 
-The component uses Discourse's category permission system:
+The component uses a dual permission system:
 
-- **Category Permissions**: Only users who can create topics in the configured category can see and use the button
-- **Simple and Direct**: Uses the same permission system as regular topic creation
-- **No Additional Configuration**: Permissions are managed through your existing category security settings
+- **Group Restrictions** *(optional)*: If configured, only users in the specified groups can see the button
+- **Category Permissions**: Users must also be able to create topics in the configured category
+- **Flexible Configuration**: You can use group restrictions for fine-grained control, or rely purely on category permissions
 
 ## Requirements
 
@@ -54,10 +55,11 @@ The component uses Discourse's category permission system:
 ## How It Works
 
 1. **Category Detection**: Detects when a user is viewing the specific configured category using multiple methods (URL, DOM elements, CSS classes)
-2. **Permission Check**: Verifies the user can create topics in the configured category
-3. **Button Override**: Replaces the "New Topic" button text and click behavior
-4. **Composer Integration**: Opens the Discourse composer in shared draft mode
-5. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
+2. **Group Check**: Verifies the user is in allowed groups (if groups are specified)
+3. **Permission Check**: Verifies the user can create topics in the configured category
+4. **Button Override**: Replaces the "New Topic" button text and click behavior
+5. **Composer Integration**: Opens the Discourse composer in shared draft mode
+6. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
 
 ## Troubleshooting
 
