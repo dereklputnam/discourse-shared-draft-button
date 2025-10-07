@@ -16,30 +16,59 @@ export default {
         hide_new_topic_button: false
       };
 
-      // Try to get theme settings safely with extensive debugging
+      // Try multiple methods to access theme settings
+      console.log("Shared Draft Button: Attempting to access theme settings...");
+      
+      // Method 1: Try service lookup
       try {
-        console.log("Shared Draft Button: Attempting to access theme settings...");
         const themeSettings = container.lookup("service:theme-settings");
-        console.log("Shared Draft Button: Raw theme settings object:", themeSettings);
-        
-        if (themeSettings) {
-          console.log("Shared Draft Button: Theme settings properties:", Object.keys(themeSettings));
-          console.log("Shared Draft Button: enabled_category from theme:", themeSettings.enabled_category);
+        console.log("Shared Draft Button: Service theme settings:", themeSettings);
+        if (themeSettings && Object.keys(themeSettings).length > 0) {
+          console.log("Shared Draft Button: Found settings via service:", Object.keys(themeSettings));
           settings = Object.assign({}, settings, themeSettings);
-          console.log("Shared Draft Button: Merged settings:", settings);
-        } else {
-          console.log("Shared Draft Button: Theme settings object is null/undefined");
         }
       } catch (e) {
-        console.log("Shared Draft Button: Error accessing theme settings:", e);
-        
-        // Try alternative theme settings access methods
-        try {
-          const altThemeSettings = container.lookup("theme-settings:main");
-          console.log("Shared Draft Button: Alternative theme settings:", altThemeSettings);
-        } catch (e2) {
-          console.log("Shared Draft Button: Alternative theme settings also failed:", e2);
+        console.log("Shared Draft Button: Service method failed:", e);
+      }
+      
+      // Method 2: Try theme-settings:main
+      try {
+        const mainThemeSettings = container.lookup("theme-settings:main");
+        console.log("Shared Draft Button: Main theme settings:", mainThemeSettings);
+        if (mainThemeSettings && Object.keys(mainThemeSettings).length > 0) {
+          console.log("Shared Draft Button: Found settings via main:", Object.keys(mainThemeSettings));
+          settings = Object.assign({}, settings, mainThemeSettings);
         }
+      } catch (e) {
+        console.log("Shared Draft Button: Main method failed:", e);
+      }
+      
+      // Method 3: Try accessing via global Discourse theme settings
+      try {
+        if (typeof Discourse !== 'undefined' && Discourse.SiteSettings) {
+          console.log("Shared Draft Button: Trying global Discourse access");
+          // For theme components, settings might be stored differently
+          // Let's check if our specific settings exist in global scope
+        }
+      } catch (e) {
+        console.log("Shared Draft Button: Global method failed:", e);
+      }
+      
+      // Method 4: Try with the theme component name
+      try {
+        const namedSettings = container.lookup("theme-setting:shared-draft-button");
+        console.log("Shared Draft Button: Named theme settings:", namedSettings);
+        if (namedSettings) {
+          settings = Object.assign({}, settings, namedSettings);
+        }
+      } catch (e) {
+        console.log("Shared Draft Button: Named method failed:", e);
+      }
+
+      // TEMPORARY: For testing, let's hardcode a value if no settings found
+      if (!settings.enabled_category || settings.enabled_category === "") {
+        console.log("Shared Draft Button: No theme settings found, using hardcoded value for testing");
+        settings.enabled_category = "167"; // Your test category - REMOVE THIS once settings work
       }
 
       console.log("Shared Draft Button: Final settings being used:", settings);
