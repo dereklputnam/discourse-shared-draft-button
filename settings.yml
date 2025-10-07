@@ -1,7 +1,7 @@
 enabled_category:
   type: string
   default: ""
-  description: "Enter the category ID where the Shared Draft button should appear. Leave empty to show on all categories."
+  description: "Enter the single category ID where the Shared Draft button should appear (e.g. '170'). Only one category is supported."
 
 button_text:
   type: string
