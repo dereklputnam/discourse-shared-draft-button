@@ -61,9 +61,20 @@ export default {
         }
         
         // TEMPORARY: If we're still not getting the category, hardcode it for now since we know it should be 170
+        // BUT only if we're actually in category 170 right now
         if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
-          console.log("Shared Draft Button: FALLBACK - Settings still empty, using hardcoded 170");
-          finalSettings.enabled_category = "170";
+          const currentPath = window.location.pathname;
+          const isInCategory170 = currentPath.includes('/170') || 
+                                 currentPath.includes('/c/170') || 
+                                 document.querySelector('[data-category-id="170"]') ||
+                                 document.body.className.includes('category-170');
+          
+          if (isInCategory170) {
+            console.log("Shared Draft Button: FALLBACK - Settings empty but we're in category 170, using hardcoded value");
+            finalSettings.enabled_category = "170";
+          } else {
+            console.log("Shared Draft Button: FALLBACK - Settings empty and not in category 170, leaving empty");
+          }
         }
       }
 
@@ -240,10 +251,16 @@ export default {
             // Method 2: Try opening with the shared draft action - EXACT copy from your script
             try {
               console.log('Shared Draft Button: Trying createSharedDraft action');
+              
+              // Get the current category ID for default
+              const currentCategoryId = settings.enabled_category || '170';
+              console.log('Shared Draft Button: Setting default category to:', currentCategoryId);
+              
               composer.open({
                 action: 'createSharedDraft',
                 draftKey: 'shared_draft_' + Date.now(),
-                archetypeId: 'regular'
+                archetypeId: 'regular',
+                categoryId: parseInt(currentCategoryId, 10)
               }).then(function() {
                 console.log('Shared Draft Button: Shared draft composer opened successfully');
               }).catch(function(error) {
@@ -255,10 +272,15 @@ export default {
               
               // Method 3: Fallback to regular topic creation and try to modify it
               console.log('Shared Draft Button: Trying fallback approach...');
+              
+              const currentCategoryId = settings.enabled_category || '170';
+              console.log('Shared Draft Button: Fallback - Setting default category to:', currentCategoryId);
+              
               composer.open({
                 action: 'createTopic',
                 draftKey: 'shared_draft_fallback_' + Date.now(),
-                archetypeId: 'regular'
+                archetypeId: 'regular',
+                categoryId: parseInt(currentCategoryId, 10)
               }).then(function() {
                 console.log('Shared Draft Button: Regular composer opened, attempting to convert to shared draft');
                 
