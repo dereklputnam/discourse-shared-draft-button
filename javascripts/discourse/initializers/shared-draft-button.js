@@ -16,16 +16,33 @@ export default {
         hide_new_topic_button: false
       };
 
-      // Try to get theme settings safely
+      // Try to get theme settings safely with extensive debugging
       try {
+        console.log("Shared Draft Button: Attempting to access theme settings...");
         const themeSettings = container.lookup("service:theme-settings");
+        console.log("Shared Draft Button: Raw theme settings object:", themeSettings);
+        
         if (themeSettings) {
+          console.log("Shared Draft Button: Theme settings properties:", Object.keys(themeSettings));
+          console.log("Shared Draft Button: enabled_category from theme:", themeSettings.enabled_category);
           settings = Object.assign({}, settings, themeSettings);
-          console.log("Shared Draft Button: Got theme settings:", settings);
+          console.log("Shared Draft Button: Merged settings:", settings);
+        } else {
+          console.log("Shared Draft Button: Theme settings object is null/undefined");
         }
       } catch (e) {
-        console.log("Shared Draft Button: Could not access theme settings, using defaults");
+        console.log("Shared Draft Button: Error accessing theme settings:", e);
+        
+        // Try alternative theme settings access methods
+        try {
+          const altThemeSettings = container.lookup("theme-settings:main");
+          console.log("Shared Draft Button: Alternative theme settings:", altThemeSettings);
+        } catch (e2) {
+          console.log("Shared Draft Button: Alternative theme settings also failed:", e2);
+        }
       }
+
+      console.log("Shared Draft Button: Final settings being used:", settings);
 
       // Function to create shared draft - exact copy of your working approach
       function createSharedDraft(event) {
@@ -194,6 +211,8 @@ export default {
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
+        console.log('Shared Draft Button: shouldOverrideButton called with settings.enabled_category:', settings.enabled_category, typeof settings.enabled_category);
+        
         // If no category restriction is set, don't show anywhere (safer default)
         if (!settings.enabled_category || settings.enabled_category === "") {
           console.log('Shared Draft Button: No enabled category configured, not overriding');
@@ -202,6 +221,8 @@ export default {
         
         const targetCategoryId = settings.enabled_category.toString();
         console.log('Shared Draft Button: Checking for target category:', targetCategoryId);
+        console.log('Shared Draft Button: Current URL:', window.location.pathname);
+        console.log('Shared Draft Button: Current body classes:', document.body.className);
         
         // Check if URL contains the target category ID
         const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
