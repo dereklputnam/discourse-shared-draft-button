@@ -3,7 +3,7 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 export default {
   name: "shared-draft-button",
   
-  initialize(container) {
+  initialize() {
     withPluginApi("0.8.31", (api) => {
       console.log("Shared Draft Button: Initializing");
 
@@ -16,39 +16,162 @@ export default {
         hide_new_topic_button: false
       };
 
-      // Try to get actual theme settings
-      try {
-        const themeSettings = container.lookup("service:theme-settings");
-        if (themeSettings) {
-          settings = Object.assign({}, settings, themeSettings);
-        }
-      } catch (e) {
-        console.log("Shared Draft Button: Using default settings");
-      }
-
       console.log('Shared Draft Button: Settings:', settings);
 
-      // Function to check if user is staff
-      function isUserStaff() {
+      // Function to create shared draft using your working approach
+      function createSharedDraft(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('Shared Draft Button: Creating shared draft...');
+        
+        // Check if Discourse is available
+        if (typeof Discourse === 'undefined') {
+          console.error('Shared Draft Button: Discourse not available');
+          return;
+        }
+        
+        // Get site settings to check shared drafts configuration
+        const siteSettings = Discourse.SiteSettings;
+        console.log('Shared Draft Button: Site settings available:', !!siteSettings);
+        if (siteSettings) {
+          console.log('Shared Draft Button: Shared drafts category setting:', siteSettings.shared_drafts_category);
+        }
+        
         try {
-          const currentUser = api.getCurrentUser();
-          const isStaff = currentUser && currentUser.staff;
-          console.log('Shared Draft Button: User is staff:', isStaff);
-          return isStaff;
-        } catch (e) {
-          console.log('Shared Draft Button: Could not determine staff status');
-          return false;
+          // Try multiple ways to access the composer (your working approach)
+          let composer = null;
+          
+          // Method 1: Try the application controller
+          try {
+            const appController = Discourse.__container__.lookup('controller:application');
+            composer = appController.get('composer');
+            console.log('Shared Draft Button: Got composer via application controller:', !!composer);
+          } catch (e) {
+            console.log('Shared Draft Button: Application controller method failed:', e.message);
+          }
+          
+          // Method 2: Try direct service lookup
+          if (!composer) {
+            try {
+              composer = Discourse.__container__.lookup('service:composer');
+              console.log('Shared Draft Button: Got composer via service lookup:', !!composer);
+            } catch (e) {
+              console.log('Shared Draft Button: Service lookup method failed:', e.message);
+            }
+          }
+          
+          // Method 3: Try controller lookup
+          if (!composer) {
+            try {
+              composer = Discourse.__container__.lookup('controller:composer');
+              console.log('Shared Draft Button: Got composer via controller lookup:', !!composer);
+            } catch (e) {
+              console.log('Shared Draft Button: Controller lookup method failed:', e.message);
+            }
+          }
+          
+          if (!composer) {
+            console.error('Shared Draft Button: All composer access methods failed');
+            return;
+          }
+          
+          // Close existing composer if open
+          if (composer.get('model')) {
+            composer.close();
+          }
+          
+          // Try to use the same approach as the standard shared draft workflow
+          setTimeout(function() {
+            console.log('Shared Draft Button: Attempting to create shared draft...');
+            
+            // Method 1: Try using the createSharedDraft action directly
+            try {
+              if (composer.createSharedDraft) {
+                console.log('Shared Draft Button: Using createSharedDraft method');
+                composer.createSharedDraft();
+                return;
+              }
+            } catch (e) {
+              console.log('Shared Draft Button: createSharedDraft method not available:', e.message);
+            }
+            
+            // Method 2: Try opening with the shared draft action
+            try {
+              console.log('Shared Draft Button: Trying createSharedDraft action');
+              composer.open({
+                action: 'createSharedDraft',
+                draftKey: 'shared_draft_' + Date.now(),
+                archetypeId: 'regular'
+              }).then(function() {
+                console.log('Shared Draft Button: Shared draft composer opened successfully');
+              }).catch(function(error) {
+                console.log('Shared Draft Button: createSharedDraft action failed:', error.message);
+                throw error;
+              });
+            } catch (e) {
+              console.log('Shared Draft Button: createSharedDraft action not available:', e.message);
+              
+              // Method 3: Fallback to regular topic creation and try to modify it
+              console.log('Shared Draft Button: Trying fallback approach...');
+              composer.open({
+                action: 'createTopic',
+                draftKey: 'shared_draft_fallback_' + Date.now(),
+                archetypeId: 'regular'
+              }).then(function() {
+                console.log('Shared Draft Button: Regular composer opened, attempting to convert to shared draft');
+                
+                // Try different ways to set shared draft mode
+                const model = composer.get('model');
+                if (model) {
+                  console.log('Shared Draft Button: Got model, trying to set shared draft properties');
+                  
+                  // Try multiple property names that might work
+                  try {
+                    model.set('isSharedDraft', true);
+                    console.log('Shared Draft Button: Set isSharedDraft property');
+                  } catch (e) {
+                    console.log('Shared Draft Button: isSharedDraft property failed:', e.message);
+                  }
+                  
+                  try {
+                    model.set('shared_draft', true);
+                    console.log('Shared Draft Button: Set shared_draft property');
+                  } catch (e) {
+                    console.log('Shared Draft Button: shared_draft property failed:', e.message);
+                  }
+                  
+                  try {
+                    model.set('sharedDraft', true);
+                    console.log('Shared Draft Button: Set sharedDraft property');
+                  } catch (e) {
+                    console.log('Shared Draft Button: sharedDraft property failed:', e.message);
+                  }
+                  
+                  // Try to trigger shared draft UI
+                  try {
+                    if (model.toggleProperty) {
+                      model.toggleProperty('sharedDraft');
+                      model.toggleProperty('sharedDraft'); // Toggle twice to end up true
+                      console.log('Shared Draft Button: Used toggleProperty method');
+                    }
+                  } catch (e) {
+                    console.log('Shared Draft Button: toggleProperty method failed:', e.message);
+                  }
+                }
+              }).catch(function(error) {
+                console.error('Shared Draft Button: All methods failed:', error);
+              });
+            }
+          }, 100);
+          
+        } catch (error) {
+          console.error('Shared Draft Button: Error accessing Discourse components:', error);
         }
       }
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
-        // Only override for staff members if staff_only is enabled
-        if (settings.staff_only && !isUserStaff()) {
-          console.log('Shared Draft Button: User is not staff, skipping override');
-          return false;
-        }
-        
         // Check category restrictions
         if (settings.enabled_category) {
           const targetCategoryId = settings.enabled_category.toString();
@@ -71,201 +194,32 @@ export default {
         return true;
       }
 
-      // Function to create shared draft using proven approach
-      function createSharedDraft(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        console.log('Shared Draft Button: Creating shared draft...');
-        
-        // Get shared drafts category from site settings
-        let sharedDraftsCategoryId = null;
-        try {
-          const siteSettings = container.lookup('service:site-settings') || 
-                              container.lookup('site-settings:main');
-          if (siteSettings && siteSettings.shared_drafts_category) {
-            sharedDraftsCategoryId = siteSettings.shared_drafts_category;
-            console.log('Shared Draft Button: Found shared drafts category in site settings:', sharedDraftsCategoryId, typeof sharedDraftsCategoryId);
-          } else {
-            console.log('Shared Draft Button: No shared drafts category found in site settings. Available settings:', Object.keys(siteSettings || {}));
-          }
-        } catch (e) {
-          console.log('Shared Draft Button: Could not get site settings for shared drafts category:', e);
+      // Function to check if user is staff
+      function isUserStaff() {
+        if (typeof Discourse === 'undefined') {
+          return false;
         }
         
-        try {
-          // Try to access composer through multiple methods
-          let composer = null;
-          
-          // Method 1: Try the application controller
-          try {
-            const appController = container.lookup('controller:application');
-            composer = appController.get('composer');
-            console.log('Shared Draft Button: Got composer via application controller:', !!composer);
-          } catch (e) {
-            console.log('Shared Draft Button: Application controller method failed');
-          }
-          
-          // Method 2: Try direct service lookup
-          if (!composer) {
-            try {
-              composer = container.lookup('service:composer');
-              console.log('Shared Draft Button: Got composer via service lookup:', !!composer);
-            } catch (e) {
-              console.log('Shared Draft Button: Service lookup method failed');
-            }
-          }
-          
-          if (!composer) {
-            console.log('Shared Draft Button: Could not access composer, using URL fallback');
-            
-            // Fallback to URL navigation with shared drafts category
-            const params = new URLSearchParams();
-            params.set('shared_draft', 'true');
-            
-            if (sharedDraftsCategoryId) {
-              params.set('category_id', sharedDraftsCategoryId);
-            }
-            
-            const newTopicUrl = `/new-topic?${params.toString()}`;
-            console.log('Shared Draft Button: URL fallback with category:', sharedDraftsCategoryId);
-            window.location.href = newTopicUrl;
-            return;
-          }
-          
-          // Close existing composer if open
-          if (composer.get('model')) {
-            composer.close();
-          }
-          
-          // Try to create shared draft using composer
-          setTimeout(() => {
-            console.log('Shared Draft Button: Attempting to create shared draft...');
-            
-            // Try the createSharedDraft action first
-            try {
-              const composerOpts = {
-                action: 'createSharedDraft',
-                draftKey: 'shared_draft_' + Date.now(),
-                archetypeId: 'regular'
-              };
-              
-              // Set category if we have the shared drafts category
-              if (sharedDraftsCategoryId) {
-                composerOpts.categoryId = sharedDraftsCategoryId;
-              }
-              
-              console.log('Shared Draft Button: Opening composer with options:', composerOpts);
-              
-              composer.open(composerOpts).then((model) => {
-                console.log('Shared Draft Button: Shared draft composer opened successfully');
-                
-                // Try to set the category after composer opens
-                if (model && sharedDraftsCategoryId) {
-                  setTimeout(() => {
-                    try {
-                      console.log('Shared Draft Button: Attempting to set category to:', sharedDraftsCategoryId);
-                      console.log('Shared Draft Button: Model properties available:', Object.keys(model));
-                      
-                      // For shared drafts, we might need to set the destination category
-                      const composerModel = composer.get('model');
-                      if (composerModel) {
-                        console.log('Shared Draft Button: Composer model properties:', Object.keys(composerModel));
-                        
-                        // Try different category property names
-                        if (composerModel.set) {
-                          composerModel.set('categoryId', sharedDraftsCategoryId);
-                          composerModel.set('category_id', sharedDraftsCategoryId);
-                          composerModel.set('destinationCategoryId', sharedDraftsCategoryId);
-                          composerModel.set('destination_category_id', sharedDraftsCategoryId);
-                          console.log('Shared Draft Button: Set all category properties on composer model');
-                        }
-                      }
-                      
-                      // Try setting on the model parameter as well
-                      if (model.set) {
-                        model.set('categoryId', sharedDraftsCategoryId);
-                        model.set('category_id', sharedDraftsCategoryId);
-                        model.set('destinationCategoryId', sharedDraftsCategoryId);
-                        model.set('destination_category_id', sharedDraftsCategoryId);
-                        console.log('Shared Draft Button: Set all category properties on returned model');
-                      }
-                      
-                      // Try to trigger UI update
-                      if (model.categoryChanged) {
-                        model.categoryChanged();
-                      }
-                      if (composerModel && composerModel.categoryChanged) {
-                        composerModel.categoryChanged();
-                      }
-                      
-                    } catch (e) {
-                      console.log('Shared Draft Button: Error setting category after composer open:', e);
-                    }
-                  }, 500);
-                }
-              }).catch(() => {
-                console.log('Shared Draft Button: createSharedDraft action failed, trying fallback');
-                fallbackToRegularTopic(composer, sharedDraftsCategoryId);
-              });
-            } catch (e) {
-              console.log('Shared Draft Button: createSharedDraft action not available, trying fallback');
-              fallbackToRegularTopic(composer, sharedDraftsCategoryId);
-            }
-          }, 100);
-          
-        } catch (error) {
-          console.error('Shared Draft Button: Error accessing composer:', error);
-          // Ultimate fallback - URL navigation with shared drafts category
-          const params = new URLSearchParams();
-          params.set('shared_draft', 'true');
-          if (sharedDraftsCategoryId) {
-            params.set('category_id', sharedDraftsCategoryId);
-          }
-          window.location.href = `/new-topic?${params.toString()}`;
-        }
-      }
-
-      // Fallback method to convert regular topic to shared draft
-      function fallbackToRegularTopic(composer, sharedDraftsCategoryId) {
-        const composerOpts = {
-          action: 'createTopic',
-          draftKey: 'shared_draft_fallback_' + Date.now(),
-          archetypeId: 'regular'
-        };
+        const currentUser = Discourse.User.current();
+        const isStaff = currentUser && currentUser.staff;
         
-        // Set category if we have the shared drafts category
-        if (sharedDraftsCategoryId) {
-          composerOpts.categoryId = sharedDraftsCategoryId;
-        }
-        
-        console.log('Shared Draft Button: Fallback composer options:', composerOpts);
-        
-        composer.open(composerOpts).then(() => {
-          console.log('Shared Draft Button: Regular composer opened, attempting to convert to shared draft');
-          
-          const model = composer.get('model');
-          if (model) {
-            // Try setting shared draft properties
-            try {
-              model.set('isSharedDraft', true);
-              model.set('sharedDraft', true);
-              console.log('Shared Draft Button: Set shared draft properties');
-            } catch (e) {
-              console.log('Shared Draft Button: Could not set shared draft properties');
-            }
-          }
-        }).catch((error) => {
-          console.error('Shared Draft Button: All composer methods failed:', error);
-        });
+        console.log('Shared Draft Button: User is staff:', isStaff);
+        return isStaff;
       }
 
       // Main function to override the New Topic button
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // Check if we should override
+        // Only override for staff members
+        if (settings.staff_only && !isUserStaff()) {
+          console.log('Shared Draft Button: User is not staff, skipping override');
+          return false;
+        }
+        
+        // Only override in target category
         if (!shouldOverrideButton()) {
+          console.log('Shared Draft Button: Not in target category, skipping override');
           return false;
         }
         
@@ -321,25 +275,25 @@ export default {
         }
         
         // Try after 1 second
-        setTimeout(() => {
+        setTimeout(function() {
           if (overrideNewTopicButton()) {
             return;
           }
           
           // Try after 3 seconds
-          setTimeout(() => {
+          setTimeout(function() {
             overrideNewTopicButton();
           }, 3000);
         }, 1000);
       }
 
       // Watch for DOM changes to handle dynamic content
-      const observer = new MutationObserver((mutations) => {
+      const observer = new MutationObserver(function(mutations) {
         let shouldCheck = false;
         
-        mutations.forEach((mutation) => {
+        mutations.forEach(function(mutation) {
           if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach((node) => {
+            mutation.addedNodes.forEach(function(node) {
               if (node.nodeType === 1) { // Element node
                 if (node.id === 'create-topic' || (node.querySelector && node.querySelector('#create-topic'))) {
                   shouldCheck = true;
