@@ -331,13 +331,41 @@ export default {
         }
         
         const siteSettings = Discourse.SiteSettings;
-        if (!siteSettings || !siteSettings.shared_drafts_allowed_groups) {
+        if (!siteSettings) {
+          console.log('Shared Draft Button: No site settings available, falling back to staff check');
+          return currentUser.staff;
+        }
+        
+        // Debug: Show all settings that contain 'shared' or 'draft'
+        const relevantSettings = Object.keys(siteSettings).filter(key => 
+          key.toLowerCase().includes('shared') || key.toLowerCase().includes('draft')
+        );
+        console.log('Shared Draft Button: Available shared/draft settings:', relevantSettings);
+        
+        // Try different possible setting names
+        const possibleSettings = [
+          'shared_drafts_allowed_groups',
+          'shared_drafts_allowed_groups_map',
+          'shared_draft_allowed_groups',
+          'sharedDraftsAllowedGroups'
+        ];
+        
+        let allowedGroupsSetting = null;
+        for (const settingName of possibleSettings) {
+          if (siteSettings[settingName]) {
+            console.log('Shared Draft Button: Found setting:', settingName, '=', siteSettings[settingName]);
+            allowedGroupsSetting = siteSettings[settingName];
+            break;
+          }
+        }
+        
+        if (!allowedGroupsSetting) {
           console.log('Shared Draft Button: No shared drafts allowed groups setting found, falling back to staff check');
           return currentUser.staff;
         }
         
-        // Get the allowed group IDs from site settings
-        const allowedGroupIds = siteSettings.shared_drafts_allowed_groups.split('|').map(id => parseInt(id, 10));
+        // Get the allowed group IDs from the found setting
+        const allowedGroupIds = allowedGroupsSetting.split('|').map(id => parseInt(id, 10));
         console.log('Shared Draft Button: Shared drafts allowed group IDs:', allowedGroupIds);
         
         // Check if user is in any of the allowed groups
