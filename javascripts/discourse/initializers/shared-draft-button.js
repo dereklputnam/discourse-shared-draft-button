@@ -24,7 +24,6 @@ export default {
 
       // Default settings
       let finalSettings = {
-        respect_category_permissions: true,
         button_text: "New Shared Draft", 
         enabled_category: "",
         require_shared_drafts_enabled: true
@@ -160,8 +159,8 @@ export default {
         
         console.log('Shared Draft Button: Creating shared draft...');
         
-        // Double-check permissions before opening composer (if enabled)
-        if (settings.respect_category_permissions && !canUserAccessSharedDrafts()) {
+        // Double-check shared draft permissions before opening composer
+        if (!canUserAccessSharedDrafts()) {
           console.error('Shared Draft Button: Shared draft permission check failed, blocking creation');
           return;
         }
@@ -433,15 +432,10 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // Check permissions if the setting is enabled
-        if (settings.respect_category_permissions) {
-          console.log('Shared Draft Button: Shared draft permission validation enabled');
-          if (!canUserAccessSharedDrafts()) {
-            console.log('Shared Draft Button: User is not in shared drafts allowed groups, skipping override');
-            return false;
-          }
-        } else {
-          console.log('Shared Draft Button: Permission validation disabled, skipping permission check');
+        // Always check shared draft permissions (uses Discourse's built-in permission system)
+        if (!canUserAccessSharedDrafts()) {
+          console.log('Shared Draft Button: User is not in shared drafts allowed groups, skipping override');
+          return false;
         }
         
         // Only override in target category (if specified)
