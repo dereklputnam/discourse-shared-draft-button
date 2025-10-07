@@ -7,127 +7,288 @@ export default {
     withPluginApi("0.8.31", (api) => {
       console.log("Shared Draft Button: Initializing");
 
-      // Default settings
-      const settings = {
+      // Get theme settings safely
+      let settings = {
         staff_only: true,
         require_shared_drafts_enabled: true,
-        button_text: "New Shared Draft",
+        button_text: "New Shared Draft", 
         enabled_category: "",
         hide_new_topic_button: false
       };
 
-      // Safely get current user
-      let currentUser = null;
+      // Try to get actual theme settings
       try {
-        currentUser = api.getCurrentUser();
+        const themeSettings = container.lookup("service:theme-settings");
+        if (themeSettings) {
+          settings = Object.assign({}, settings, themeSettings);
+        }
       } catch (e) {
-        console.log("Shared Draft Button: Could not get current user");
+        console.log("Shared Draft Button: Using default settings");
       }
 
-      // Safely get site settings
-      let siteSettings = null;
-      try {
-        siteSettings = container.lookup("service:site-settings") || 
-                      container.lookup("site-settings:main");
-      } catch (e) {
-        console.log("Shared Draft Button: Could not get site settings");
-      }
+      console.log('Shared Draft Button: Settings:', settings);
 
-      // Check if we should show the button
-      function shouldShowButton(categoryId) {
-        // Check if user has permission
-        if (settings.staff_only && (!currentUser || !currentUser.staff)) {
+      // Function to check if user is staff
+      function isUserStaff() {
+        try {
+          const currentUser = api.getCurrentUser();
+          const isStaff = currentUser && currentUser.staff;
+          console.log('Shared Draft Button: User is staff:', isStaff);
+          return isStaff;
+        } catch (e) {
+          console.log('Shared Draft Button: Could not determine staff status');
           return false;
         }
-        
-        // Check if shared drafts are enabled
-        if (settings.require_shared_drafts_enabled && (!siteSettings || !siteSettings.shared_drafts_category)) {
+      }
+
+      // Function to check if we should override the button
+      function shouldOverrideButton() {
+        // Only override for staff members if staff_only is enabled
+        if (settings.staff_only && !isUserStaff()) {
+          console.log('Shared Draft Button: User is not staff, skipping override');
           return false;
         }
         
         // Check category restrictions
         if (settings.enabled_category) {
-          const enabledCategoryId = parseInt(settings.enabled_category);
-          if (!isNaN(enabledCategoryId) && categoryId && categoryId !== enabledCategoryId) {
-            return false;
-          }
+          const targetCategoryId = settings.enabled_category.toString();
+          
+          // Check if URL contains the target category ID
+          const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
+          
+          // Also check for category element in DOM
+          const categoryElement = document.querySelector('[data-category-id="' + targetCategoryId + '"]');
+          
+          const shouldOverride = urlHasCategory || !!categoryElement;
+          
+          console.log('Shared Draft Button: Should override?', shouldOverride, 
+                      '(URL has category:', urlHasCategory, ', Element found:', !!categoryElement, ')');
+          
+          return shouldOverride;
         }
         
+        // If no category restriction, show on all pages
         return true;
       }
 
-      // Function to create shared draft
-      function createSharedDraft(categoryId) {
+      // Function to create shared draft using proven approach
+      function createSharedDraft(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('Shared Draft Button: Creating shared draft...');
+        
         try {
-          console.log('Shared Draft Button: Creating shared draft for category', categoryId);
+          // Try to access composer through multiple methods
+          let composer = null;
           
-          // Simple URL approach - most reliable
-          const params = new URLSearchParams();
-          params.set('shared_draft', 'true');
-          
-          if (categoryId) {
-            params.set('category_id', categoryId);
+          // Method 1: Try the application controller
+          try {
+            const appController = container.lookup('controller:application');
+            composer = appController.get('composer');
+            console.log('Shared Draft Button: Got composer via application controller:', !!composer);
+          } catch (e) {
+            console.log('Shared Draft Button: Application controller method failed');
           }
           
-          const newTopicUrl = `/new-topic?${params.toString()}`;
-          console.log('Shared Draft Button: Navigating to:', newTopicUrl);
+          // Method 2: Try direct service lookup
+          if (!composer) {
+            try {
+              composer = container.lookup('service:composer');
+              console.log('Shared Draft Button: Got composer via service lookup:', !!composer);
+            } catch (e) {
+              console.log('Shared Draft Button: Service lookup method failed');
+            }
+          }
           
-          window.location.href = newTopicUrl;
+          if (!composer) {
+            console.log('Shared Draft Button: Could not access composer, using URL fallback');
+            
+            // Fallback to URL navigation
+            const params = new URLSearchParams();
+            params.set('shared_draft', 'true');
+            
+            // Get category ID from URL if available
+            const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/[^\/]+\/(\d+)/);
+            if (pathMatch) {
+              params.set('category_id', pathMatch[1]);
+            }
+            
+            const newTopicUrl = `/new-topic?${params.toString()}`;
+            window.location.href = newTopicUrl;
+            return;
+          }
           
-        } catch (e) {
-          console.log('Shared Draft Button: Error creating shared draft', e);
+          // Close existing composer if open
+          if (composer.get('model')) {
+            composer.close();
+          }
+          
+          // Try to create shared draft using composer
+          setTimeout(() => {
+            console.log('Shared Draft Button: Attempting to create shared draft...');
+            
+            // Try the createSharedDraft action first
+            try {
+              composer.open({
+                action: 'createSharedDraft',
+                draftKey: 'shared_draft_' + Date.now(),
+                archetypeId: 'regular'
+              }).then(() => {
+                console.log('Shared Draft Button: Shared draft composer opened successfully');
+              }).catch(() => {
+                console.log('Shared Draft Button: createSharedDraft action failed, trying fallback');
+                fallbackToRegularTopic(composer);
+              });
+            } catch (e) {
+              console.log('Shared Draft Button: createSharedDraft action not available, trying fallback');
+              fallbackToRegularTopic(composer);
+            }
+          }, 100);
+          
+        } catch (error) {
+          console.error('Shared Draft Button: Error accessing composer:', error);
+          // Ultimate fallback - URL navigation
+          const params = new URLSearchParams();
+          params.set('shared_draft', 'true');
+          window.location.href = `/new-topic?${params.toString()}`;
         }
       }
 
-      // Override New Topic button
-      function overrideNewTopicButton() {
-        setTimeout(() => {
-          const createTopicBtn = document.querySelector("#create-topic");
+      // Fallback method to convert regular topic to shared draft
+      function fallbackToRegularTopic(composer) {
+        composer.open({
+          action: 'createTopic',
+          draftKey: 'shared_draft_fallback_' + Date.now(),
+          archetypeId: 'regular'
+        }).then(() => {
+          console.log('Shared Draft Button: Regular composer opened, attempting to convert to shared draft');
           
-          if (createTopicBtn && !createTopicBtn.dataset.sharedDraftOverridden) {
-            
-            // Get current category ID from URL
-            let categoryId = null;
-            const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/[^\/]+\/(\d+)/);
-            if (pathMatch) {
-              categoryId = parseInt(pathMatch[1]);
+          const model = composer.get('model');
+          if (model) {
+            // Try setting shared draft properties
+            try {
+              model.set('isSharedDraft', true);
+              model.set('sharedDraft', true);
+              console.log('Shared Draft Button: Set shared draft properties');
+            } catch (e) {
+              console.log('Shared Draft Button: Could not set shared draft properties');
             }
-            
-            // Check if we should show the button for this category
-            if (!shouldShowButton(categoryId)) {
-              return;
-            }
-            
-            // Change button text
-            const buttonLabel = createTopicBtn.querySelector(".d-button-label");
-            if (buttonLabel) {
-              buttonLabel.textContent = settings.button_text;
-            }
-            
-            // Add click handler
-            createTopicBtn.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              createSharedDraft(categoryId);
-            }, { capture: true });
-            
-            createTopicBtn.dataset.sharedDraftOverridden = "true";
-            createTopicBtn.title = "Create a new shared draft for staff collaboration";
-            
-            console.log('Shared Draft Button: Overridden New Topic button for category', categoryId);
           }
+        }).catch((error) => {
+          console.error('Shared Draft Button: All composer methods failed:', error);
+        });
+      }
+
+      // Main function to override the New Topic button
+      function overrideNewTopicButton() {
+        console.log('Shared Draft Button: Checking if button should be overridden...');
+        
+        // Check if we should override
+        if (!shouldOverrideButton()) {
+          return false;
+        }
+        
+        // Find the create topic button
+        const createTopicButton = document.querySelector('#create-topic');
+        
+        if (!createTopicButton) {
+          console.log('Shared Draft Button: Create topic button not found');
+          return false;
+        }
+        
+        // Check if we've already overridden this button
+        if (createTopicButton.dataset.sharedDraftOverridden) {
+          console.log('Shared Draft Button: Button already overridden');
+          return true;
+        }
+        
+        console.log('Shared Draft Button: Overriding New Topic button...');
+        
+        try {
+          // Change the button text
+          const buttonLabel = createTopicButton.querySelector('.d-button-label');
+          if (buttonLabel) {
+            buttonLabel.textContent = settings.button_text;
+            console.log('Shared Draft Button: Button text changed to "' + settings.button_text + '"');
+          }
+          
+          // Update the title
+          createTopicButton.title = 'Create a new shared draft for staff collaboration';
+          
+          // Add our click handler (use capture to override existing handlers)
+          createTopicButton.addEventListener('click', createSharedDraft, true);
+          
+          // Mark as overridden
+          createTopicButton.dataset.sharedDraftOverridden = 'true';
+          
+          console.log('Shared Draft Button: Button successfully overridden!');
+          return true;
+          
+        } catch (error) {
+          console.error('Shared Draft Button: Error overriding button:', error);
+          return false;
+        }
+      }
+
+      // Try to override button with multiple attempts
+      function initializeSharedDraftButton() {
+        console.log('Shared Draft Button: Starting initialization...');
+        
+        // Try immediately
+        if (overrideNewTopicButton()) {
+          return;
+        }
+        
+        // Try after 1 second
+        setTimeout(() => {
+          if (overrideNewTopicButton()) {
+            return;
+          }
+          
+          // Try after 3 seconds
+          setTimeout(() => {
+            overrideNewTopicButton();
+          }, 3000);
         }, 1000);
       }
 
-      // Initialize
-      overrideNewTopicButton();
-      
+      // Watch for DOM changes to handle dynamic content
+      const observer = new MutationObserver((mutations) => {
+        let shouldCheck = false;
+        
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === 1) { // Element node
+                if (node.id === 'create-topic' || (node.querySelector && node.querySelector('#create-topic'))) {
+                  shouldCheck = true;
+                }
+              }
+            });
+          }
+        });
+        
+        if (shouldCheck) {
+          console.log('Shared Draft Button: DOM changed, checking for button...');
+          setTimeout(overrideNewTopicButton, 100);
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      // Start the initialization
+      initializeSharedDraftButton();
+
       // Re-run when navigating between pages
       api.onPageChange(() => {
-        setTimeout(overrideNewTopicButton, 500);
+        setTimeout(initializeSharedDraftButton, 500);
       });
-      
-      console.log("Shared Draft Button: Initialized successfully");
+
+      console.log('Shared Draft Button: Setup complete');
     });
   }
 };
