@@ -1,18 +1,31 @@
 import { withPluginApi } from "discourse/lib/plugin-api";
 
 export default {
-  name: "shared-draft-button-simple",
+  name: "shared-draft-button",
   
-  initialize() {
+  initialize(container) {
     withPluginApi("0.8.31", () => {
-      console.log("Shared Draft Button: Initializing simple version");
+      console.log("Shared Draft Button: Initializing");
 
-      // Simple settings - just like your hardcoded TARGET_CATEGORY_ID approach
-      const settings = {
+      // Default settings
+      let settings = {
         staff_only: true,
         button_text: "New Shared Draft", 
-        enabled_category: "" // Empty means all categories
+        enabled_category: "",
+        require_shared_drafts_enabled: true,
+        hide_new_topic_button: false
       };
+
+      // Try to get theme settings safely
+      try {
+        const themeSettings = container.lookup("service:theme-settings");
+        if (themeSettings) {
+          settings = Object.assign({}, settings, themeSettings);
+          console.log("Shared Draft Button: Got theme settings:", settings);
+        }
+      } catch (e) {
+        console.log("Shared Draft Button: Could not access theme settings, using defaults");
+      }
 
       // Function to create shared draft - exact copy of your working approach
       function createSharedDraft(event) {
@@ -181,26 +194,30 @@ export default {
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
-        // Check category restrictions
-        if (settings.enabled_category) {
-          const targetCategoryId = settings.enabled_category.toString();
-          
-          // Check if URL contains the target category ID
-          const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
-          
-          // Also check for category element in DOM
-          const categoryElement = document.querySelector('[data-category-id="' + targetCategoryId + '"]');
-          
-          const shouldOverride = urlHasCategory || !!categoryElement;
-          
-          console.log('Shared Draft Button: Should override?', shouldOverride, 
-                      '(URL has category:', urlHasCategory, ', Element found:', !!categoryElement, ')');
-          
-          return shouldOverride;
+        // If no category restriction is set, don't show anywhere (safer default)
+        if (!settings.enabled_category || settings.enabled_category === "") {
+          console.log('Shared Draft Button: No enabled category configured, not overriding');
+          return false;
         }
         
-        // If no category restriction, show on all pages
-        return true;
+        const targetCategoryId = settings.enabled_category.toString();
+        console.log('Shared Draft Button: Checking for target category:', targetCategoryId);
+        
+        // Check if URL contains the target category ID
+        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId);
+        
+        // Also check for category element in DOM
+        const categoryElement = document.querySelector('[data-category-id="' + targetCategoryId + '"]');
+        
+        // Also check body class for category
+        const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
+        
+        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory;
+        
+        console.log('Shared Draft Button: Should override?', shouldOverride, 
+                    '(URL has category:', urlHasCategory, ', Element found:', !!categoryElement, ', Body class:', bodyHasCategory, ')');
+        
+        return shouldOverride;
       }
 
       // Main function to override the New Topic button
