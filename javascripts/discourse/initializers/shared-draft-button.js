@@ -21,10 +21,16 @@ export default {
         hide_new_topic_button: false
       };
 
+      // TEMPORARY: Force the category to 170 for testing
+      finalSettings.enabled_category = "170";
+      console.log("Shared Draft Button: TEMPORARY - Hardcoded category to 170 for testing");
+      
       // Method 1: Use settings parameter directly (this is the standard way)
       if (settings && typeof settings === 'object') {
         finalSettings = Object.assign({}, finalSettings, settings);
         console.log("Shared Draft Button: Loaded settings via parameter");
+        // Don't override the hardcoded value for now
+        finalSettings.enabled_category = "170";
       }
 
       // Method 2: Fallback to service lookup if parameter method didn't work
