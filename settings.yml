@@ -16,7 +16,7 @@ button_text:
 staff_only:
   type: bool
   default: true
-  description: "Only show the button to staff members"
+  description: "Only show the button to users in the 'Shared drafts allowed groups' (uses Discourse's built-in shared draft permissions)"
 
 require_shared_drafts_enabled:
   type: bool

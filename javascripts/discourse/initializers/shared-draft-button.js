@@ -318,17 +318,37 @@ export default {
         }
       }
 
-      // Function to check if user is staff
-      function isUserStaff() {
+      // Function to check if user can see shared drafts (based on Discourse groups)
+      function canUserAccessSharedDrafts() {
         if (typeof Discourse === 'undefined') {
           return false;
         }
         
         const currentUser = Discourse.User.current();
-        const isStaff = currentUser && currentUser.staff;
+        if (!currentUser) {
+          console.log('Shared Draft Button: No current user');
+          return false;
+        }
         
-        console.log('Shared Draft Button: User is staff:', isStaff);
-        return isStaff;
+        const siteSettings = Discourse.SiteSettings;
+        if (!siteSettings || !siteSettings.shared_drafts_allowed_groups) {
+          console.log('Shared Draft Button: No shared drafts allowed groups setting found, falling back to staff check');
+          return currentUser.staff;
+        }
+        
+        // Get the allowed group IDs from site settings
+        const allowedGroupIds = siteSettings.shared_drafts_allowed_groups.split('|').map(id => parseInt(id, 10));
+        console.log('Shared Draft Button: Shared drafts allowed group IDs:', allowedGroupIds);
+        
+        // Check if user is in any of the allowed groups
+        const userGroups = currentUser.groups || [];
+        const userGroupIds = userGroups.map(group => group.id);
+        console.log('Shared Draft Button: User group IDs:', userGroupIds);
+        
+        const hasAccess = allowedGroupIds.some(groupId => userGroupIds.includes(groupId));
+        console.log('Shared Draft Button: User can access shared drafts:', hasAccess);
+        
+        return hasAccess;
       }
 
       // Function to check if we should override the button
@@ -390,9 +410,9 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
-        // Only override for staff members
-        if (settings.staff_only && !isUserStaff()) {
-          console.log('Shared Draft Button: User is not staff, skipping override');
+        // Only override for users who can access shared drafts
+        if (settings.staff_only && !canUserAccessSharedDrafts()) {
+          console.log('Shared Draft Button: User cannot access shared drafts, skipping override');
           return false;
         }
         
