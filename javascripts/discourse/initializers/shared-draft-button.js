@@ -152,12 +152,8 @@ export default {
       console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
       console.log("Shared Draft Button: allowed_groups value:", JSON.stringify(finalSettings.allowed_groups), "type:", typeof finalSettings.allowed_groups);
       
-      // CRITICAL TEST: Try to manually set groups for testing
-      if (!finalSettings.allowed_groups || finalSettings.allowed_groups.trim() === "") {
-        console.log("Shared Draft Button: TESTING - Settings appear empty, manually setting test groups");
-        finalSettings.allowed_groups = "product_marketing,product_management,staff";
-        console.log("Shared Draft Button: TESTING - Set allowed_groups to:", finalSettings.allowed_groups);
-      }
+      // Remove hardcoded test groups - using real settings now
+      console.log("Shared Draft Button: Using configured allowed_groups:", finalSettings.allowed_groups);
 
       // Use finalSettings instead of settings for the rest of the code
       settings = finalSettings;
@@ -506,10 +502,16 @@ export default {
         console.log('Shared Draft Button: User passed group check, continuing to category check');
         
         // Check if user can create topics in this category
-        if (!canUserCreateInCategory()) {
+        const canCreateInCategory = canUserCreateInCategory();
+        console.log('Shared Draft Button: Category creation check result:', canCreateInCategory);
+        
+        if (!canCreateInCategory) {
           console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
+          console.log('Shared Draft Button: IMPORTANT - User should not see ANY create button in this category');
           return false;
         }
+        
+        console.log('Shared Draft Button: User can create topics in category, proceeding with override');
         
         // Only override in target category (if specified)
         if (!shouldOverrideButton()) {
