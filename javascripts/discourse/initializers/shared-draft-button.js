@@ -342,6 +342,9 @@ export default {
         }
         
         // If no allowed groups specified, allow all users (rely on category permissions)
+        console.log('Shared Draft Button: allowed_groups setting value:', JSON.stringify(settings.allowed_groups));
+        console.log('Shared Draft Button: allowed_groups type:', typeof settings.allowed_groups);
+        
         if (!settings.allowed_groups || settings.allowed_groups.trim() === "") {
           console.log('Shared Draft Button: No group restrictions configured, allowing all users');
           return true;
@@ -481,7 +484,11 @@ export default {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         
         // Check if user is in allowed groups (if groups are specified)
-        if (!isUserInAllowedGroups()) {
+        console.log('Shared Draft Button: About to check group permissions...');
+        const hasGroupAccess = isUserInAllowedGroups();
+        console.log('Shared Draft Button: Group access check result:', hasGroupAccess);
+        
+        if (!hasGroupAccess) {
           console.log('Shared Draft Button: User is not in allowed groups, skipping override');
           return false;
         }
