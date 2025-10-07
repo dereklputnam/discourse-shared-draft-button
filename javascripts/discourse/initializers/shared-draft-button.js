@@ -361,19 +361,17 @@ export default {
         console.log('Shared Draft Button: Checking group membership for allowed_groups:', settings.allowed_groups);
         
         try {
-          // Parse the allowed group IDs (list type stores as pipe-separated IDs)
-          const allowedGroupIds = settings.allowed_groups.split('|').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
-          console.log('Shared Draft Button: Allowed group IDs:', allowedGroupIds);
+          // Parse the allowed group names (comma-separated)
+          const allowedGroupNames = settings.allowed_groups.split(',').map(name => name.trim());
+          console.log('Shared Draft Button: Allowed group names:', allowedGroupNames);
           
           // Get user's groups
           const userGroups = currentUser.groups || [];
-          const userGroupIds = userGroups.map(group => group.id);
           const userGroupNames = userGroups.map(group => group.name);
-          console.log('Shared Draft Button: User group IDs:', userGroupIds);
           console.log('Shared Draft Button: User group names:', userGroupNames);
           
-          // Check if user is in any of the allowed groups (by ID)
-          const isInAllowedGroup = allowedGroupIds.some(groupId => userGroupIds.includes(groupId));
+          // Check if user is in any of the allowed groups (by name)
+          const isInAllowedGroup = allowedGroupNames.some(groupName => userGroupNames.includes(groupName));
           console.log('Shared Draft Button: User is in allowed groups:', isInAllowedGroup);
           
           return isInAllowedGroup;
