@@ -1,8 +1,12 @@
 import { withPluginApi } from "discourse/lib/plugin-api";
 
+// BACKUP CONFIGURATION: If theme settings aren't loading, you can hardcode values here
+// Set to null to rely on theme settings, or set to a category ID string to use as fallback
+const FALLBACK_CATEGORY_ID = null; // Change this to "167" or "170" etc. if settings don't work
+
 export default {
   name: "shared-draft-button",
-  
+
   initialize(container, settings) {
     // ULTRA CRITICAL DEBUG: Log settings BEFORE withPluginApi
     console.log("=== SHARED DRAFT BUTTON: INITIALIZATION START ===");
@@ -161,6 +165,34 @@ export default {
         console.warn("Shared Draft Button:   1. Make a local copy of this theme component, OR");
         console.warn("Shared Draft Button:   2. Fork the repo and point to your fork, OR");
         console.warn("Shared Draft Button:   3. Hardcode your category ID in the component");
+      }
+
+      // LAST RESORT: Try to access theme settings directly from the DOM or window
+      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+        console.log("Shared Draft Button: Trying last resort - checking for settings in window/DOM");
+
+        // Try to find theme settings in the window object
+        if (typeof window !== 'undefined') {
+          // Check if theme settings are exposed anywhere
+          if (window.PreloadStore && window.PreloadStore.data && window.PreloadStore.data.theme) {
+            console.log("Shared Draft Button: Found PreloadStore.theme:", window.PreloadStore.data.theme);
+          }
+
+          // Try to access via the registry
+          try {
+            if (container && container.registry) {
+              console.log("Shared Draft Button: Registry entries:", container.registry.registrations);
+            }
+          } catch (e) {
+            console.log("Shared Draft Button: Could not access registry:", e);
+          }
+        }
+      }
+
+      // Apply fallback if settings are still empty and FALLBACK_CATEGORY_ID is set
+      if ((!finalSettings.enabled_category || finalSettings.enabled_category === "") && FALLBACK_CATEGORY_ID) {
+        console.warn("Shared Draft Button: Using FALLBACK_CATEGORY_ID from code:", FALLBACK_CATEGORY_ID);
+        finalSettings.enabled_category = FALLBACK_CATEGORY_ID;
       }
 
       // Use finalSettings instead of settings for the rest of the code
