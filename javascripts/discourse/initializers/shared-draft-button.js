@@ -153,12 +153,76 @@ export default {
       // Use finalSettings instead of settings for the rest of the code
       settings = finalSettings;
 
+      // Function to check if we should override the button
+      function shouldOverrideButton() {
+        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(settings.enabled_category));
+
+        // If no category restriction is set, don't show anywhere
+        if (!settings.enabled_category || settings.enabled_category === "") {
+          console.log('Shared Draft Button: No enabled category - returning false');
+          return false;
+        }
+
+        const targetCategoryId = settings.enabled_category.toString();
+        console.log('Shared Draft Button: Target category ID:', targetCategoryId);
+        console.log('Shared Draft Button: Current URL:', window.location.pathname);
+        console.log('Shared Draft Button: Current URL hash:', window.location.hash);
+        console.log('Shared Draft Button: Current URL search:', window.location.search);
+
+        // Check if URL contains the target category ID in various patterns
+        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId) ||
+                              window.location.pathname.includes('/c/' + targetCategoryId) ||
+                              window.location.hash.includes('/' + targetCategoryId) ||
+                              window.location.search.includes('category=' + targetCategoryId);
+
+        // Also check for category element in DOM with multiple selectors
+        const categorySelectors = [
+          '[data-category-id="' + targetCategoryId + '"]',
+          '.category-' + targetCategoryId,
+          '[data-category="' + targetCategoryId + '"]'
+        ];
+
+        let categoryElement = null;
+        for (const selector of categorySelectors) {
+          categoryElement = document.querySelector(selector);
+          if (categoryElement) {
+            console.log('Shared Draft Button: Found category element with selector:', selector);
+            break;
+          }
+        }
+
+        // Also check body class for category
+        const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
+
+        // Check for category in meta tags
+        const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
+        const metaHasCategory = categoryMeta && categoryMeta.content === targetCategoryId;
+
+        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory, 'Meta check:', metaHasCategory);
+        console.log('Shared Draft Button: Body classes:', document.body.className);
+
+        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory;
+
+        console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
+
+        return shouldOverride;
+      }
+
       // Function to create shared draft - exact copy of your working approach
       function createSharedDraft(event) {
         event.preventDefault();
         event.stopPropagation();
 
         console.log('Shared Draft Button: Creating shared draft...');
+
+        // CRITICAL: Double-check we're in the right category before proceeding
+        if (!shouldOverrideButton()) {
+          console.error('Shared Draft Button: Not in target category, aborting shared draft creation');
+          console.error('Shared Draft Button: Button should have been restored but was not. Forcing restore now.');
+          restoreNewTopicButton();
+          // Let the default action proceed (normal topic creation)
+          return;
+        }
 
         // Check if Discourse is available
         if (typeof Discourse === 'undefined') {
@@ -317,63 +381,6 @@ export default {
         }
       }
 
-
-
-      // Function to check if we should override the button
-      function shouldOverrideButton() {
-        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(settings.enabled_category));
-        
-        // If no category restriction is set, don't show anywhere
-        if (!settings.enabled_category || settings.enabled_category === "") {
-          console.log('Shared Draft Button: No enabled category - returning false');
-          return false;
-        }
-        
-        const targetCategoryId = settings.enabled_category.toString();
-        console.log('Shared Draft Button: Target category ID:', targetCategoryId);
-        console.log('Shared Draft Button: Current URL:', window.location.pathname);
-        console.log('Shared Draft Button: Current URL hash:', window.location.hash);
-        console.log('Shared Draft Button: Current URL search:', window.location.search);
-        
-        // Check if URL contains the target category ID in various patterns
-        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId) || 
-                              window.location.pathname.includes('/c/' + targetCategoryId) ||
-                              window.location.hash.includes('/' + targetCategoryId) ||
-                              window.location.search.includes('category=' + targetCategoryId);
-        
-        // Also check for category element in DOM with multiple selectors
-        const categorySelectors = [
-          '[data-category-id="' + targetCategoryId + '"]',
-          '.category-' + targetCategoryId,
-          '[data-category="' + targetCategoryId + '"]'
-        ];
-        
-        let categoryElement = null;
-        for (const selector of categorySelectors) {
-          categoryElement = document.querySelector(selector);
-          if (categoryElement) {
-            console.log('Shared Draft Button: Found category element with selector:', selector);
-            break;
-          }
-        }
-        
-        // Also check body class for category
-        const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
-        
-        // Check for category in meta tags
-        const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
-        const metaHasCategory = categoryMeta && categoryMeta.content === targetCategoryId;
-        
-        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory, 'Meta check:', metaHasCategory);
-        console.log('Shared Draft Button: Body classes:', document.body.className);
-        
-        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory;
-        
-        console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
-        
-        return shouldOverride;
-      }
-
       // Function to restore the original New Topic button
       function restoreNewTopicButton() {
         console.log('Shared Draft Button: Attempting to restore original button...');
@@ -401,8 +408,9 @@ export default {
           // Restore the original title
           createTopicButton.title = 'Create a new topic';
 
-          // Remove our click handler
+          // Remove our click handler - remove all instances
           createTopicButton.removeEventListener('click', createSharedDraft, true);
+          createTopicButton.removeEventListener('click', createSharedDraft, false);
 
           // Remove the override marker
           delete createTopicButton.dataset.sharedDraftOverridden;
@@ -454,15 +462,28 @@ export default {
           return false;
         }
 
-        // Check if we've already overridden this button
+        // Check if we've already overridden this button - if so, force re-check the text
         if (createTopicButton.dataset.sharedDraftOverridden) {
-          console.log('Shared Draft Button: Button already overridden');
+          console.log('Shared Draft Button: Button already overridden, verifying state...');
+
+          // Verify the text is still correct
+          const buttonLabel = createTopicButton.querySelector('.d-button-label');
+          if (buttonLabel && buttonLabel.textContent !== settings.button_text) {
+            console.log('Shared Draft Button: Button text incorrect, updating...');
+            buttonLabel.textContent = settings.button_text;
+          }
+
           return true;
         }
 
         console.log('Shared Draft Button: Overriding New Topic button...');
 
         try {
+          // Remove any existing click handlers first (clean slate)
+          const newButton = createTopicButton.cloneNode(true);
+          createTopicButton.parentNode.replaceChild(newButton, createTopicButton);
+          createTopicButton = newButton;
+
           // Change the button text
           const buttonLabel = createTopicButton.querySelector('.d-button-label');
           if (buttonLabel) {
@@ -520,10 +541,22 @@ export default {
       // Listen for route changes in Discourse's SPA navigation
       api.onPageChange(() => {
         console.log('Shared Draft Button: Route changed, re-evaluating button state...');
-        // Wait a bit for the DOM to update after route change
+
+        // Try multiple times with increasing delays to catch the button after route change
         setTimeout(function() {
+          console.log('Shared Draft Button: Route change - attempt 1');
           overrideNewTopicButton();
-        }, 250);
+        }, 100);
+
+        setTimeout(function() {
+          console.log('Shared Draft Button: Route change - attempt 2');
+          overrideNewTopicButton();
+        }, 300);
+
+        setTimeout(function() {
+          console.log('Shared Draft Button: Route change - attempt 3');
+          overrideNewTopicButton();
+        }, 600);
       });
 
       // Watch for DOM changes to handle dynamic content
