@@ -85,6 +85,12 @@ export default {
       function shouldOverrideButton() {
         console.log('Shared Draft Button: shouldOverrideButton - enabled_category setting:', JSON.stringify(componentSettings.enabled_category));
 
+        // If no category is configured in settings, don't show button anywhere
+        if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
+          console.log('Shared Draft Button: No enabled_category configured in settings - button will not appear');
+          return false;
+        }
+
         // Get the current category from the page
         const currentCategoryId = getCurrentCategoryId();
         console.log('Shared Draft Button: Current category ID detected:', currentCategoryId);
@@ -95,17 +101,11 @@ export default {
           return false;
         }
 
-        // If a specific category is configured in settings, only show in that category
-        if (componentSettings.enabled_category && componentSettings.enabled_category !== "") {
-          const targetCategoryId = componentSettings.enabled_category.toString();
-          const shouldShow = currentCategoryId === targetCategoryId;
-          console.log('Shared Draft Button: Setting restricts to category', targetCategoryId, '- current is', currentCategoryId, '- showing:', shouldShow);
-          return shouldShow;
-        }
-
-        // If no category restriction in settings, show in any category that's detected
-        console.log('Shared Draft Button: No category restriction in settings - showing button in current category:', currentCategoryId);
-        return true;
+        // Check if current category matches the configured category
+        const targetCategoryId = componentSettings.enabled_category.toString();
+        const shouldShow = currentCategoryId === targetCategoryId;
+        console.log('Shared Draft Button: Setting restricts to category', targetCategoryId, '- current is', currentCategoryId, '- showing:', shouldShow);
+        return shouldShow;
       }
 
       // Function to create shared draft - exact copy of your working approach

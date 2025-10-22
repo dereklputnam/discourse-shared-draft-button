@@ -5,7 +5,7 @@ A Discourse theme component that adds a "New Shared Draft" button in a specific 
 ## Features
 
 - **Automatic category detection**: Dynamically detects which category you're viewing from the URL and page context
-- **Optional category filtering**: Configure a specific category ID to restrict the button to only that category
+- **Single category targeting**: Configure a specific category ID where the button should appear
 - **Non-intrusive design**: Hides the standard "New Topic" button and adds a separate "New Shared Draft" button
 - **Simple and accessible**: Shows the shared draft button to all users who can view the category
 - **Seamless integration**: Works with Discourse's built-in shared draft functionality
@@ -29,7 +29,7 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ### Settings
 
-- **Enabled Category** *(optional)*: Enter a category ID to restrict the Shared Draft button to only that category. Leave empty to show the button in all categories (wherever you're viewing).
+- **Enabled Category** *(required)*: Enter the category ID where the Shared Draft button should appear (e.g., "167"). The button will only show when viewing this specific category.
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
@@ -66,9 +66,9 @@ After installation, configure the component in Admin → Customize → Themes �
    - Meta tags
 
 2. **Smart Button Display**:
-   - **If you configure a category ID**: Button only appears when viewing that specific category
-   - **If you leave category ID empty**: Button appears in any category you're viewing
-   - Always detects the current category dynamically from the page context
+   - Button only appears when viewing the specific category you configured in settings
+   - Automatically detects the current category dynamically from the page context
+   - Compares detected category with your configured category ID
 
 3. **Button Management**:
    - **When conditions are met**: Hides the original "New Topic" button and inserts a new "New Shared Draft" button
@@ -95,8 +95,8 @@ After installation, configure the component in Admin → Customize → Themes �
 - Check browser console for debugging information
 
 ### Button Appearing in Wrong Places
-- If you configured a specific category ID, verify it matches the category where the button appears
-- Remember: if you leave the "Enabled Category" setting empty, the button will appear in ALL categories
+- Verify the "Enabled Category" setting contains the correct category ID
+- Check the browser console - it will log which category is detected and whether it matches your setting
 - Try hard refreshing the page (Ctrl+Shift+R or Cmd+Shift+R) to clear cached JavaScript
 
 ### Button Not Updating When Navigating
