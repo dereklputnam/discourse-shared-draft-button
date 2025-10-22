@@ -5,7 +5,7 @@ export default {
   
   initialize(container, settings) {
     withPluginApi("0.8.31", (api) => {
-      console.log("Shared Draft Button: Initializing - VERSION 2025-01-ROUTE-CHANGE-FIX");
+      console.log("Shared Draft Button: Initializing - VERSION 2025-01-SEPARATE-BUTTON");
       console.log("Shared Draft Button: CRITICAL DEBUG - This should appear if new version loaded");
       // Reduced debugging - uncomment lines below for troubleshooting
       // console.log("Shared Draft Button: arguments.length:", arguments.length);
@@ -218,9 +218,8 @@ export default {
         // CRITICAL: Double-check we're in the right category before proceeding
         if (!shouldOverrideButton()) {
           console.error('Shared Draft Button: Not in target category, aborting shared draft creation');
-          console.error('Shared Draft Button: Button should have been restored but was not. Forcing restore now.');
-          restoreNewTopicButton();
-          // Let the default action proceed (normal topic creation)
+          console.error('Shared Draft Button: This button should not be visible here. Removing it.');
+          removeSharedDraftButton();
           return;
         }
 
@@ -381,158 +380,132 @@ export default {
         }
       }
 
-      // Function to restore the original New Topic button
-      function restoreNewTopicButton() {
-        console.log('Shared Draft Button: Attempting to restore original button...');
+      // Function to remove the shared draft button and show the original
+      function removeSharedDraftButton() {
+        console.log('Shared Draft Button: Attempting to remove shared draft button...');
 
+        // Find and remove our custom button
+        const sharedDraftButton = document.querySelector('#create-shared-draft-button');
+        if (sharedDraftButton) {
+          sharedDraftButton.remove();
+          console.log('Shared Draft Button: Removed custom shared draft button');
+        }
+
+        // Show the original New Topic button
         const createTopicButton = document.querySelector('#create-topic');
-        if (!createTopicButton) {
-          console.log('Shared Draft Button: No button to restore');
-          return;
-        }
-
-        // Only restore if we previously overrode it
-        if (!createTopicButton.dataset.sharedDraftOverridden) {
-          console.log('Shared Draft Button: Button was not overridden, nothing to restore');
-          return;
-        }
-
-        try {
-          // Restore the original button text
-          const buttonLabel = createTopicButton.querySelector('.d-button-label');
-          if (buttonLabel) {
-            buttonLabel.textContent = 'New Topic';
-            console.log('Shared Draft Button: Button text restored to "New Topic"');
-          }
-
-          // Restore the original title
-          createTopicButton.title = 'Create a new topic';
-
-          // Remove our click handler - remove all instances
-          createTopicButton.removeEventListener('click', createSharedDraft, true);
-          createTopicButton.removeEventListener('click', createSharedDraft, false);
-
-          // Remove the override marker
-          delete createTopicButton.dataset.sharedDraftOverridden;
-
-          console.log('Shared Draft Button: Button successfully restored!');
-        } catch (error) {
-          console.error('Shared Draft Button: Error restoring button:', error);
+        if (createTopicButton && createTopicButton.dataset.hiddenBySharedDraft === 'true') {
+          createTopicButton.style.display = '';
+          delete createTopicButton.dataset.hiddenBySharedDraft;
+          console.log('Shared Draft Button: Restored original New Topic button visibility');
         }
       }
 
-      // Main function to override the New Topic button
-      function overrideNewTopicButton() {
-        console.log('Shared Draft Button: Checking if button should be overridden...');
+      // Main function to add the shared draft button
+      function addSharedDraftButton() {
+        console.log('Shared Draft Button: Checking if button should be added...');
         console.log('Shared Draft Button: DEBUG - Current settings object:', settings);
 
-        // Find the create topic button first
-        let createTopicButton = null;
-        try {
-          createTopicButton = document.querySelector('#create-topic');
-        } catch (e) {
-          console.log('Shared Draft Button: Error finding create topic button:', e);
+        // Check if we should show the shared draft button in this category
+        const shouldShow = shouldOverrideButton();
+
+        // Check if our custom button already exists
+        const existingSharedDraftButton = document.querySelector('#create-shared-draft-button');
+
+        // If we shouldn't show but button exists, remove it and show original
+        if (!shouldShow && existingSharedDraftButton) {
+          console.log('Shared Draft Button: Not in target category, removing custom button');
+          removeSharedDraftButton();
           return false;
         }
 
-        if (!createTopicButton) {
-          console.log('Shared Draft Button: Create topic button not found');
-          return false;
-        }
-
-        // Check if we should override in this category
-        const shouldOverride = shouldOverrideButton();
-
-        // If we shouldn't override but the button is currently overridden, restore it
-        if (!shouldOverride && createTopicButton.dataset.sharedDraftOverridden) {
-          console.log('Shared Draft Button: Not in target category, restoring original button');
-          restoreNewTopicButton();
-          return false;
-        }
-
-        // If we shouldn't override and it's not overridden, nothing to do
-        if (!shouldOverride) {
-          console.log('Shared Draft Button: Not in target category, skipping override');
-          return false;
-        }
-
-        // Additional safety checks
-        if (!createTopicButton.hasAttribute) {
-          console.log('Shared Draft Button: Create topic button missing hasAttribute method');
-          return false;
-        }
-
-        // Check if we've already overridden this button - if so, force re-check the text
-        if (createTopicButton.dataset.sharedDraftOverridden) {
-          console.log('Shared Draft Button: Button already overridden, verifying state...');
-
-          // Verify the text is still correct
-          const buttonLabel = createTopicButton.querySelector('.d-button-label');
-          if (buttonLabel && buttonLabel.textContent !== settings.button_text) {
-            console.log('Shared Draft Button: Button text incorrect, updating...');
-            buttonLabel.textContent = settings.button_text;
+        // If we shouldn't show and button doesn't exist, nothing to do
+        if (!shouldShow) {
+          console.log('Shared Draft Button: Not in target category, skipping');
+          // Make sure original button is visible if it was hidden
+          const createTopicButton = document.querySelector('#create-topic');
+          if (createTopicButton && createTopicButton.dataset.hiddenBySharedDraft === 'true') {
+            createTopicButton.style.display = '';
+            delete createTopicButton.dataset.hiddenBySharedDraft;
           }
+          return false;
+        }
 
+        // If we should show and button already exists, nothing to do
+        if (existingSharedDraftButton) {
+          console.log('Shared Draft Button: Custom button already exists');
           return true;
         }
 
-        console.log('Shared Draft Button: Overriding New Topic button...');
+        // Find the original create topic button
+        const createTopicButton = document.querySelector('#create-topic');
+        if (!createTopicButton) {
+          console.log('Shared Draft Button: Original create topic button not found');
+          return false;
+        }
+
+        console.log('Shared Draft Button: Adding custom shared draft button...');
 
         try {
-          // Remove any existing click handlers first (clean slate)
-          const newButton = createTopicButton.cloneNode(true);
-          createTopicButton.parentNode.replaceChild(newButton, createTopicButton);
-          createTopicButton = newButton;
+          // Hide the original New Topic button
+          createTopicButton.style.display = 'none';
+          createTopicButton.dataset.hiddenBySharedDraft = 'true';
+          console.log('Shared Draft Button: Hid original New Topic button');
 
-          // Change the button text
-          const buttonLabel = createTopicButton.querySelector('.d-button-label');
+          // Create our custom shared draft button by cloning the original
+          const sharedDraftButton = createTopicButton.cloneNode(true);
+          sharedDraftButton.id = 'create-shared-draft-button';
+          sharedDraftButton.style.display = ''; // Make sure it's visible
+          delete sharedDraftButton.dataset.hiddenBySharedDraft;
+
+          // Update the button text
+          const buttonLabel = sharedDraftButton.querySelector('.d-button-label');
           if (buttonLabel) {
             buttonLabel.textContent = settings.button_text;
-            console.log('Shared Draft Button: Button text changed to "' + settings.button_text + '"');
+            console.log('Shared Draft Button: Set button text to "' + settings.button_text + '"');
           }
 
           // Update the title
-          createTopicButton.title = 'Create a new shared draft for staff collaboration';
+          sharedDraftButton.title = 'Create a new shared draft for staff collaboration';
 
-          // Add our click handler (use capture to override existing handlers)
-          createTopicButton.addEventListener('click', createSharedDraft, true);
+          // Add our click handler
+          sharedDraftButton.addEventListener('click', createSharedDraft, true);
 
-          // Mark as overridden
-          createTopicButton.dataset.sharedDraftOverridden = 'true';
+          // Insert the button after the original (hidden) button
+          createTopicButton.parentNode.insertBefore(sharedDraftButton, createTopicButton.nextSibling);
 
-          console.log('Shared Draft Button: Button successfully overridden!');
+          console.log('Shared Draft Button: Custom button successfully added!');
           return true;
 
         } catch (error) {
-          console.error('Shared Draft Button: Error overriding button:', error);
+          console.error('Shared Draft Button: Error adding custom button:', error);
           return false;
         }
       }
 
-      // Try to override button with multiple attempts
+      // Try to add button with multiple attempts
       function initializeSharedDraftButton() {
         console.log('Shared Draft Button: Starting initialization...');
-        
+
         // Try immediately
-        const result1 = overrideNewTopicButton();
+        const result1 = addSharedDraftButton();
         console.log('Shared Draft Button: First attempt result:', result1);
         if (result1) {
           console.log('Shared Draft Button: First attempt succeeded, stopping');
           return;
         }
-        
+
         // Try after 1 second
         setTimeout(function() {
-          const result2 = overrideNewTopicButton();
+          const result2 = addSharedDraftButton();
           console.log('Shared Draft Button: Second attempt result:', result2);
           if (result2) {
             console.log('Shared Draft Button: Second attempt succeeded, stopping');
             return;
           }
-          
+
           // Try after 3 seconds
           setTimeout(function() {
-            const result3 = overrideNewTopicButton();
+            const result3 = addSharedDraftButton();
             console.log('Shared Draft Button: Third attempt result:', result3);
           }, 3000);
         }, 1000);
@@ -545,17 +518,17 @@ export default {
         // Try multiple times with increasing delays to catch the button after route change
         setTimeout(function() {
           console.log('Shared Draft Button: Route change - attempt 1');
-          overrideNewTopicButton();
+          addSharedDraftButton();
         }, 100);
 
         setTimeout(function() {
           console.log('Shared Draft Button: Route change - attempt 2');
-          overrideNewTopicButton();
+          addSharedDraftButton();
         }, 300);
 
         setTimeout(function() {
           console.log('Shared Draft Button: Route change - attempt 3');
-          overrideNewTopicButton();
+          addSharedDraftButton();
         }, 600);
       });
 
@@ -572,13 +545,21 @@ export default {
                 }
               }
             });
+            // Also check if our custom button was removed
+            mutation.removedNodes.forEach(function(node) {
+              if (node.nodeType === 1) { // Element node
+                if (node.id === 'create-shared-draft-button') {
+                  shouldCheck = true;
+                }
+              }
+            });
           }
         });
 
         if (shouldCheck) {
           console.log('Shared Draft Button: DOM changed, checking for button...');
           setTimeout(function() {
-            overrideNewTopicButton();
+            addSharedDraftButton();
           }, 100);
         }
       });
