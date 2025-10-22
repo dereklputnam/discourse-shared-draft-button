@@ -4,18 +4,19 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 export default {
   name: "shared-draft-button",
 
-  initialize(container) {
+  initialize(container, settings) {
     // ULTRA CRITICAL DEBUG: Log what we receive
     console.log("=== SHARED DRAFT BUTTON: INITIALIZATION START ===");
     console.log("Container:", container);
+    console.log("Settings parameter:", settings);
     console.log("this.settings:", this.settings);
     console.log("Arguments:", arguments);
 
-    // Get settings from this.settings (Discourse pattern for theme components)
-    const themeSettings = this.settings || {};
-    console.log("Theme settings object:", themeSettings);
+    // Try both methods - parameter and this.settings
+    const themeSettings = settings || this.settings || {};
+    console.log("Theme settings object (using parameter or this.settings):", themeSettings);
     console.log("Theme settings keys:", Object.keys(themeSettings));
-    console.log("enabled_category from this.settings:", themeSettings.enabled_category);
+    console.log("enabled_category:", themeSettings.enabled_category);
 
     withPluginApi("0.8.31", (api) => {
       console.log("Shared Draft Button: Initializing - VERSION 2025-01-FIX-SETTINGS");
@@ -48,29 +49,24 @@ export default {
         require_shared_drafts_enabled: true
       };
 
-      // Method 1: Use this.settings (the correct way for theme components)
-      if (themeSettings && typeof themeSettings === 'object') {
+      // Method 1: Use settings from parameter or this.settings
+      if (themeSettings && typeof themeSettings === 'object' && Object.keys(themeSettings).length > 0) {
         finalSettings = Object.assign({}, finalSettings, themeSettings);
-        console.log("Shared Draft Button: Loaded settings via this.settings");
-        console.log("Shared Draft Button: Settings from this.settings:", themeSettings);
+        console.log("Shared Draft Button: Loaded settings from parameter/this.settings");
+        console.log("Shared Draft Button: Settings:", themeSettings);
         console.log("Shared Draft Button: finalSettings after merge:", finalSettings);
-
-        // Special check: if enabled_category is still empty but we saw it in the detailed logs
-        if ((!finalSettings.enabled_category || finalSettings.enabled_category === "") && themeSettings.enabled_category) {
-          finalSettings.enabled_category = themeSettings.enabled_category;
-          console.log("Shared Draft Button: Manually set enabled_category from settings:", themeSettings.enabled_category);
-        }
       }
 
-      // Method 2: Fallback to service lookup if parameter method didn't work
-      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+      // Method 2: Fallback to service lookup ONLY if we got NO settings at all
+      const hasSettings = themeSettings && typeof themeSettings === 'object' && Object.keys(themeSettings).length > 0;
+      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
         console.log("Shared Draft Button: Settings parameter didn't provide category, trying service lookup...");
         
         try {
-          const themeSettings = container.lookup("service:theme-settings");
-          console.log("Shared Draft Button: service:theme-settings result:", themeSettings);
-          if (themeSettings && typeof themeSettings === 'object') {
-            finalSettings = Object.assign({}, finalSettings, themeSettings);
+          const serviceSettings = container.lookup("service:theme-settings");
+          console.log("Shared Draft Button: service:theme-settings result:", serviceSettings);
+          if (serviceSettings && typeof serviceSettings === 'object') {
+            finalSettings = Object.assign({}, finalSettings, serviceSettings);
             console.log("Shared Draft Button: Loaded theme settings via service");
           }
         } catch (e) {
@@ -78,8 +74,8 @@ export default {
         }
       }
 
-      // Method 3: Try accessing settings via the container with theme name
-      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+      // Method 3: Try accessing settings via the container with theme name (ONLY if we have no settings)
+      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
         console.log("Shared Draft Button: Still no category, trying theme-specific lookup...");
         
         try {
@@ -110,8 +106,8 @@ export default {
         }
       }
       
-      // Method 4: Try accessing theme settings from Discourse.__container__
-      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+      // Method 4: Try accessing theme settings from Discourse.__container__ (ONLY if we have no settings)
+      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
         console.log("Shared Draft Button: Still no category, trying Discourse container...");
         
         try {
