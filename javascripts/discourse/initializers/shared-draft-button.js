@@ -143,6 +143,19 @@ export default {
       console.log("Shared Draft Button: Final settings being used:", finalSettings);
       console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
 
+      // FALLBACK: If settings are completely empty (remote theme settings not loaded),
+      // use environment-specific defaults. This helps when the component is installed
+      // as a remote GitHub theme where custom settings can't be saved.
+      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
+        console.warn("Shared Draft Button: WARNING - No enabled_category found in settings!");
+        console.warn("Shared Draft Button: This usually means the theme is installed as a remote theme from GitHub.");
+        console.warn("Shared Draft Button: Settings configured in the UI won't work for remote themes.");
+        console.warn("Shared Draft Button: To use custom settings, either:");
+        console.warn("Shared Draft Button:   1. Make a local copy of this theme component, OR");
+        console.warn("Shared Draft Button:   2. Fork the repo and point to your fork, OR");
+        console.warn("Shared Draft Button:   3. Hardcode your category ID in the component");
+      }
+
       // Use finalSettings instead of settings for the rest of the code
       settings = finalSettings;
 
