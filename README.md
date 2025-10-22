@@ -48,7 +48,10 @@ After installation, configure the component in Admin → Customize → Themes �
 ## Requirements
 
 - Discourse 3.0+ (uses modern plugin API)
-- Shared drafts must be enabled in your Discourse settings
+- Shared drafts must be enabled in your Discourse settings:
+  - Go to `Admin → Site Settings` and search for "shared_drafts"
+  - Or visit: `yoursite.com/admin/site_settings/category/all_results?filter=shared_drafts`
+  - Key settings: `shared_drafts_category` and `shared_drafts_min_trust_level`
 - The configured category should have restricted visibility (only trusted users) since shared drafts bypass normal create/reply permissions
 
 ## How It Works
@@ -78,7 +81,9 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ### Button Not Appearing
 - Check that you're viewing the correct category (match the configured category ID)
-- Ensure shared drafts are enabled in Admin → Settings → Features
+- Ensure shared drafts are enabled in Admin → Site Settings → Search "shared_drafts"
+  - You can also visit: `yoursite.com/admin/site_settings/category/all_results?filter=shared_drafts`
+  - Check the browser console on page load - it will log the direct link to your site's shared drafts settings
 - Check browser console for debugging information
 
 ### Button Appearing in Wrong Places

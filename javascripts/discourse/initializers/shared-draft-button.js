@@ -7,6 +7,11 @@ export default {
     withPluginApi("0.8.31", (api) => {
       console.log("Shared Draft Button: Initializing - VERSION 2025-01-SEPARATE-BUTTON");
       console.log("Shared Draft Button: CRITICAL DEBUG - This should appear if new version loaded");
+
+      // Log helpful link to shared drafts settings
+      const baseUrl = window.location.origin;
+      const sharedDraftsSettingsUrl = baseUrl + '/admin/site_settings/category/all_results?filter=shared_drafts';
+      console.log("Shared Draft Button: Configure shared drafts at:", sharedDraftsSettingsUrl);
       // Reduced debugging - uncomment lines below for troubleshooting
       // console.log("Shared Draft Button: arguments.length:", arguments.length);
       // console.log("Shared Draft Button: Received settings parameter:", settings);
