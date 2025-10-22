@@ -4,14 +4,21 @@ export default {
   name: "shared-draft-button",
   
   initialize(container, settings) {
-    withPluginApi("0.8.31", (api) => {
-      console.log("Shared Draft Button: Initializing - VERSION 2025-01-SETTINGS-DEBUG");
-      console.log("Shared Draft Button: CRITICAL DEBUG - This should appear if new version loaded");
+    // ULTRA CRITICAL DEBUG: Log settings BEFORE withPluginApi
+    console.log("=== SHARED DRAFT BUTTON: INITIALIZATION START ===");
+    console.log("Settings parameter received:", settings);
+    console.log("Settings type:", typeof settings);
+    console.log("Settings is null?", settings === null);
+    console.log("Settings is undefined?", settings === undefined);
+    if (settings && typeof settings === 'object') {
+      console.log("Settings keys:", Object.keys(settings));
+      console.log("Settings.enabled_category:", settings.enabled_category);
+      console.log("Has own property 'enabled_category'?", settings.hasOwnProperty('enabled_category'));
+    }
 
-      // CRITICAL: Log what settings we received
-      console.log("Shared Draft Button: Received settings parameter:", settings);
-      console.log("Shared Draft Button: Settings keys:", settings ? Object.keys(settings) : "settings is null/undefined");
-      console.log("Shared Draft Button: enabled_category from parameter:", settings ? settings.enabled_category : "N/A");
+    withPluginApi("0.8.31", (api) => {
+      console.log("Shared Draft Button: Initializing - VERSION 2025-01-ULTRA-DEBUG");
+      console.log("Shared Draft Button: Inside withPluginApi - settings still available:", settings);
 
       // Log helpful link to shared drafts settings
       const baseUrl = window.location.origin;
