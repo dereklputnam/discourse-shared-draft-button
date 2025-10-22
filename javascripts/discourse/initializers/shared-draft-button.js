@@ -2,7 +2,7 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 
 // BACKUP CONFIGURATION: If theme settings aren't loading, you can hardcode values here
 // Set to null to rely on theme settings, or set to a category ID string to use as fallback
-const FALLBACK_CATEGORY_ID = null; // Change this to "167" or "170" etc. if settings don't work
+const FALLBACK_CATEGORY_ID = "167"; // Staging: 167, Production: 170
 
 export default {
   name: "shared-draft-button",
