@@ -186,20 +186,20 @@ export default {
         }
       }
 
-      // Use finalSettings instead of settings for the rest of the code
-      settings = finalSettings;
+      // Use finalSettings for the rest of the code (can't reassign settings variable)
+      const componentSettings = finalSettings;
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
-        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(settings.enabled_category));
+        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(componentSettings.enabled_category));
 
         // If no category restriction is set, don't show anywhere
-        if (!settings.enabled_category || settings.enabled_category === "") {
+        if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
           console.log('Shared Draft Button: No enabled category - returning false');
           return false;
         }
 
-        const targetCategoryId = settings.enabled_category.toString();
+        const targetCategoryId = componentSettings.enabled_category.toString();
         console.log('Shared Draft Button: Target category ID:', targetCategoryId);
         console.log('Shared Draft Button: Current URL:', window.location.pathname);
         console.log('Shared Draft Button: Current URL hash:', window.location.hash);
@@ -335,7 +335,7 @@ export default {
               console.log('Shared Draft Button: Trying createSharedDraft action');
 
               // Get the current category ID for default
-              const currentCategoryId = settings.enabled_category;
+              const currentCategoryId = componentSettings.enabled_category;
               console.log('Shared Draft Button: Setting default category to:', currentCategoryId);
               
               composer.open({
@@ -356,7 +356,7 @@ export default {
               // Method 3: Fallback to regular topic creation and try to modify it
               console.log('Shared Draft Button: Trying fallback approach...');
 
-              const currentCategoryId = settings.enabled_category;
+              const currentCategoryId = componentSettings.enabled_category;
               console.log('Shared Draft Button: Fallback - Setting default category to:', currentCategoryId);
               
               composer.open({
@@ -496,8 +496,8 @@ export default {
           // Update the button text
           const buttonLabel = sharedDraftButton.querySelector('.d-button-label');
           if (buttonLabel) {
-            buttonLabel.textContent = settings.button_text;
-            console.log('Shared Draft Button: Set button text to "' + settings.button_text + '"');
+            buttonLabel.textContent = componentSettings.button_text;
+            console.log('Shared Draft Button: Set button text to "' + componentSettings.button_text + '"');
           }
 
           // Update the title
