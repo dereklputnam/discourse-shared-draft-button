@@ -26,12 +26,13 @@ export default {
       function getCurrentCategoryId() {
         console.log('Shared Draft Button: Detecting current category...');
         console.log('Shared Draft Button: Current URL:', window.location.pathname);
+        console.log('Shared Draft Button: Full URL:', window.location.href);
 
         // Method 1: Extract from URL path (most reliable)
         // Matches patterns like /c/category-name/123 or /c/123
-        const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/(\d+)|\/c\/(\d+)|\/(\d+)(?:\/|$)/);
+        const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/(\d+)|\/c\/(\d+)/);
         if (pathMatch) {
-          const categoryId = pathMatch[1] || pathMatch[2] || pathMatch[3];
+          const categoryId = pathMatch[1] || pathMatch[2];
           console.log('Shared Draft Button: Found category ID in URL path:', categoryId);
           return categoryId;
         }
@@ -412,7 +413,17 @@ export default {
 
       // Listen for route changes in Discourse's SPA navigation
       api.onPageChange(() => {
-        console.log('Shared Draft Button: Route changed, re-evaluating button state...');
+        console.log('Shared Draft Button: ========== ROUTE CHANGED ==========');
+        console.log('Shared Draft Button: New URL:', window.location.href);
+        console.log('Shared Draft Button: New pathname:', window.location.pathname);
+
+        // IMPORTANT: First remove the existing button immediately if it exists
+        // This prevents the button from persisting when navigating away
+        const existingButton = document.querySelector('#create-shared-draft-button');
+        if (existingButton) {
+          console.log('Shared Draft Button: Removing existing button before re-evaluation');
+          removeSharedDraftButton();
+        }
 
         // Try multiple times with increasing delays to catch the button after route change
         setTimeout(function() {
