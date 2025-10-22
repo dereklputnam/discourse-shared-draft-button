@@ -25,9 +25,8 @@ export default {
 
       // Default settings
       let finalSettings = {
-        button_text: "New Shared Draft", 
+        button_text: "New Shared Draft",
         enabled_category: "",
-        allowed_groups: "",
         require_shared_drafts_enabled: true
       };
 
@@ -150,18 +149,6 @@ export default {
 
       console.log("Shared Draft Button: Final settings being used:", finalSettings);
       console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
-      console.log("Shared Draft Button: allowed_groups value:", JSON.stringify(finalSettings.allowed_groups), "type:", typeof finalSettings.allowed_groups);
-      
-      // DEBUG: Check if settings are actually being loaded
-      console.log("Shared Draft Button: CRITICAL - Current allowed_groups setting:", JSON.stringify(finalSettings.allowed_groups));
-      console.log("Shared Draft Button: Setting is empty?", (!finalSettings.allowed_groups || finalSettings.allowed_groups.trim() === ""));
-      
-      // TEMPORARY FIX: If settings are empty but should have groups, add them manually
-      if (!finalSettings.allowed_groups || finalSettings.allowed_groups.trim() === "") {
-        console.log("Shared Draft Button: WARNING - Settings are empty, applying manual fix");
-        finalSettings.allowed_groups = "product_marketing,product_management,staff";
-        console.log("Shared Draft Button: Manually set allowed_groups to:", finalSettings.allowed_groups);
-      }
 
       // Use finalSettings instead of settings for the rest of the code
       settings = finalSettings;
@@ -170,20 +157,9 @@ export default {
       function createSharedDraft(event) {
         event.preventDefault();
         event.stopPropagation();
-        
+
         console.log('Shared Draft Button: Creating shared draft...');
-        
-        // Double-check permissions before opening composer
-        if (!isUserInAllowedGroups()) {
-          console.error('Shared Draft Button: Group permission check failed, blocking creation');
-          return;
-        }
-        
-        if (!canUserCreateInCategory()) {
-          console.error('Shared Draft Button: Category permission check failed, blocking creation');
-          return;
-        }
-        
+
         // Check if Discourse is available
         if (typeof Discourse === 'undefined') {
           console.error('Shared Draft Button: Discourse not available');
@@ -342,98 +318,6 @@ export default {
       }
 
 
-      // Function to check if user is in allowed groups
-      function isUserInAllowedGroups() {
-        if (typeof Discourse === 'undefined') {
-          return false;
-        }
-        
-        const currentUser = Discourse.User.current();
-        if (!currentUser) {
-          console.log('Shared Draft Button: No current user for group check');
-          return false;
-        }
-        
-        // If no allowed groups specified, allow all users (rely on category permissions)
-        console.log('Shared Draft Button: allowed_groups setting value:', JSON.stringify(settings.allowed_groups));
-        console.log('Shared Draft Button: allowed_groups type:', typeof settings.allowed_groups);
-        
-        if (!settings.allowed_groups || settings.allowed_groups.trim() === "") {
-          console.log('Shared Draft Button: No group restrictions configured, allowing all users');
-          return true;
-        }
-        
-        console.log('Shared Draft Button: Checking group membership for allowed_groups:', settings.allowed_groups);
-        
-        try {
-          // Parse the allowed group names (comma-separated)
-          const allowedGroupNames = settings.allowed_groups.split(',').map(name => name.trim());
-          console.log('Shared Draft Button: Allowed group names:', allowedGroupNames);
-          
-          // Get user's groups
-          const userGroups = currentUser.groups || [];
-          const userGroupNames = userGroups.map(group => group.name);
-          console.log('Shared Draft Button: User group names:', userGroupNames);
-          
-          // Check if user is in any of the allowed groups (by name)
-          const isInAllowedGroup = allowedGroupNames.some(groupName => userGroupNames.includes(groupName));
-          console.log('Shared Draft Button: User is in allowed groups:', isInAllowedGroup);
-          
-          return isInAllowedGroup;
-        } catch (e) {
-          console.log('Shared Draft Button: Error checking group membership:', e.message);
-          // Fallback: deny access if we can't check groups
-          return false;
-        }
-      }
-
-      // Function to check if user can create topics in the category
-      function canUserCreateInCategory() {
-        if (typeof Discourse === 'undefined') {
-          return false;
-        }
-        
-        const currentUser = Discourse.User.current();
-        if (!currentUser) {
-          console.log('Shared Draft Button: No current user for category check');
-          return false;
-        }
-        
-        // Get the current category ID
-        const categoryId = settings.enabled_category;
-        if (!categoryId) {
-          console.log('Shared Draft Button: No category configured for permission check');
-          return true; // If no category specified, don't restrict
-        }
-        
-        console.log('Shared Draft Button: Checking category creation permissions for category:', categoryId);
-        
-        try {
-          // Try to get the category from the store
-          const store = Discourse.__container__.lookup('service:store');
-          const category = store.peekRecord('category', categoryId);
-          
-          if (category) {
-            console.log('Shared Draft Button: Found category:', category.name);
-            console.log('Shared Draft Button: Category can_create_topic:', category.can_create_topic);
-            
-            // Check if user can create topics in this category
-            // Note: can_create_topic might be true, undefined (allowed), or false (denied)
-            const canCreate = category.can_create_topic !== false;
-            console.log('Shared Draft Button: User can create topics in category:', canCreate);
-            
-            return canCreate;
-          } else {
-            console.log('Shared Draft Button: Category not found in store, allowing access');
-            // If we can't find the category, don't restrict (fail open for usability)
-            return true;
-          }
-        } catch (e) {
-          console.log('Shared Draft Button: Error checking category permissions:', e.message);
-          // Fallback: allow access if we can't check (fail open for usability)
-          return true;
-        }
-      }
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
@@ -494,43 +378,7 @@ export default {
       function overrideNewTopicButton() {
         console.log('Shared Draft Button: Checking if button should be overridden...');
         console.log('Shared Draft Button: DEBUG - Current settings object:', settings);
-        console.log('Shared Draft Button: DEBUG - Version check - enhanced group debugging loaded');
-        
-        // Check if user is in allowed groups (if groups are specified)
-        console.log('Shared Draft Button: About to check group permissions...');
-        const hasGroupAccess = isUserInAllowedGroups();
-        console.log('Shared Draft Button: Group access check result:', hasGroupAccess);
-        
-        if (!hasGroupAccess) {
-          console.log('Shared Draft Button: User is not in allowed groups, hiding the button entirely');
-          
-          // Find and hide the create topic button for unapproved users
-          const createTopicButton = document.querySelector('#create-topic');
-          if (createTopicButton) {
-            console.log('Shared Draft Button: Found create topic button, hiding it for unapproved user');
-            createTopicButton.style.display = 'none';
-            createTopicButton.dataset.hiddenBySharedDraftComponent = 'true';
-          } else {
-            console.log('Shared Draft Button: Create topic button not found for hiding');
-          }
-          
-          return false;
-        }
-        
-        console.log('Shared Draft Button: User passed group check, continuing to category check');
-        
-        // Check if user can create topics in this category
-        const canCreateInCategory = canUserCreateInCategory();
-        console.log('Shared Draft Button: Category creation check result:', canCreateInCategory);
-        
-        if (!canCreateInCategory) {
-          console.log('Shared Draft Button: User cannot create topics in this category, skipping override');
-          console.log('Shared Draft Button: IMPORTANT - User should not see ANY create button in this category');
-          return false;
-        }
-        
-        console.log('Shared Draft Button: User can create topics in category, proceeding with override');
-        
+
         // Only override in target category (if specified)
         if (!shouldOverrideButton()) {
           console.log('Shared Draft Button: Not in target category, skipping override');
@@ -640,15 +488,6 @@ export default {
           console.log('Shared Draft Button: DOM changed, checking for button...');
           setTimeout(function() {
             overrideNewTopicButton();
-            // Also check if we need to hide newly added buttons for unapproved users
-            if (!isUserInAllowedGroups()) {
-              const createTopicButton = document.querySelector('#create-topic');
-              if (createTopicButton && !createTopicButton.dataset.hiddenBySharedDraftComponent) {
-                console.log('Shared Draft Button: Hiding newly added button for unapproved user');
-                createTopicButton.style.display = 'none';
-                createTopicButton.dataset.hiddenBySharedDraftComponent = 'true';
-              }
-            }
           }, 100);
         }
       });

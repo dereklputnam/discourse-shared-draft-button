@@ -28,7 +28,6 @@ After installation, configure the component in Admin → Customize → Themes �
 
 - **Enabled Category** *(required)*: Enter the single category ID where the Shared Draft button should appear. Only one category is supported.
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
-- **Allowed Groups** *(optional)*: Select groups from the dropdown that can see the Shared Draft button. Leave empty to show for all users who can create topics in the category.
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
 ## How to Find Your Category ID
@@ -40,32 +39,24 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ## Permission System
 
-The component uses a dual permission system:
-
-- **Group Restrictions** *(optional)*: If configured, only users in the specified groups can see the button
-- **Category Permissions**: Users must also be able to create topics in the configured category
-- **Flexible Configuration**: You can use group restrictions for fine-grained control, or rely purely on category permissions
+The component will show the "New Shared Draft" button to all users viewing the configured category. Discourse's built-in category and shared draft permissions will still apply when users attempt to create the shared draft.
 
 ## Requirements
 
 - Discourse 3.0+ (uses modern plugin API)
 - Shared drafts must be enabled in your Discourse settings
-- Users must have topic creation permissions in the target category
 
 ## How It Works
 
 1. **Category Detection**: Detects when a user is viewing the specific configured category using multiple methods (URL, DOM elements, CSS classes)
-2. **Group Check**: Verifies the user is in allowed groups (if groups are specified)
-3. **Permission Check**: Verifies the user can create topics in the configured category
-4. **Button Override**: Replaces the "New Topic" button text and click behavior
-5. **Composer Integration**: Opens the Discourse composer in shared draft mode
-6. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
+2. **Button Override**: Replaces the "New Topic" button text and click behavior
+3. **Composer Integration**: Opens the Discourse composer in shared draft mode
+4. **Category Pre-selection**: Automatically selects the correct category for the new shared draft
 
 ## Troubleshooting
 
 ### Button Not Appearing
 - Check that you're viewing the correct category (match the configured category ID)
-- Verify you have permission to create topics in that category
 - Ensure shared drafts are enabled in Admin → Settings → Features
 - Check browser console for debugging information
 
@@ -73,15 +64,9 @@ The component uses a dual permission system:
 - Check the "Enabled Category" setting - it should contain the exact category ID you want
 - The component only supports one category at a time
 
-### Permission Issues
-- The component uses Discourse's category permission system
-- If users can't see the button, check Admin → Categories → [Your Category] → Security
-- Add the appropriate groups to the category with "Create / Reply / See" permissions
-
 ### Composer Issues
 - Verify shared drafts are properly configured in your Discourse instance
 - Check that the configured category allows shared drafts
-- Ensure the category allows topic creation for the user
 - Check browser console for detailed error messages
 
 ## Technical Details
@@ -105,8 +90,6 @@ https://github.com/dereklputnam/discourse-shared-draft-button
 ## Changelog
 
 ### Latest Version
-- Simplified permission system to use Discourse's category permissions
-- Removed unused "hide new topic button" setting
-- Enhanced error handling and logging
-- Improved category detection with multiple fallback methods
-- Better composer integration with category pre-selection
+- Removed all permission checks - button now appears for all users in the configured category
+- Simplified codebase by removing group and category permission validation
+- Discourse's built-in permissions still apply when creating shared drafts

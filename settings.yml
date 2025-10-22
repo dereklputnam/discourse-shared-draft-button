@@ -8,11 +8,6 @@ button_text:
   default: "New Shared Draft"
   description: "Text to display on the shared draft button"
 
-allowed_groups:
-  type: string
-  default: ""
-  description: "Enter group names separated by commas (e.g. 'staff,product_marketing'). This hides the button for all other users - they can still view shared drafts but cannot create them. Leave empty to show for all users who can create topics in the category."
-
 require_shared_drafts_enabled:
   type: bool
   default: true
