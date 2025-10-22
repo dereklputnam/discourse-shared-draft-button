@@ -5,10 +5,10 @@ A Discourse theme component that replaces the standard "New Topic" button with a
 ## Features
 
 - **Single category focus**: Only appears in the one category you configure
-- **Permission-aware**: Respects Discourse's existing category permissions
+- **Simple and accessible**: Shows the shared draft button to all users who can view the category
 - **Seamless integration**: Works with Discourse's built-in shared draft functionality
 - **Customizable button text**: Change the button text to match your needs
-- **Smart detection**: Automatically detects the current category and applies restrictions
+- **Smart detection**: Automatically detects the current category and applies the button override
 - **Composer integration**: Opens the composer in shared draft mode with the correct category pre-selected
 - **Enhanced error handling**: Robust error handling with comprehensive logging
 
@@ -39,12 +39,15 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ## Permission System
 
-The component will show the "New Shared Draft" button to all users viewing the configured category. Discourse's built-in category and shared draft permissions will still apply when users attempt to create the shared draft.
+**IMPORTANT**: This component shows the "New Shared Draft" button to all users viewing the configured category.
+
+⚠️ **Security Note**: Discourse's shared draft functionality bypasses normal category permissions. If a user can view the category where this component is enabled, they will be able to create and edit ANY shared draft in that category, regardless of their normal create/reply permissions. Only enable this component in categories that are restricted to trusted users who should have full shared draft access.
 
 ## Requirements
 
 - Discourse 3.0+ (uses modern plugin API)
 - Shared drafts must be enabled in your Discourse settings
+- The configured category should have restricted visibility (only trusted users) since shared drafts bypass normal create/reply permissions
 
 ## How It Works
 
@@ -69,6 +72,11 @@ The component will show the "New Shared Draft" button to all users viewing the c
 - Check that the configured category allows shared drafts
 - Check browser console for detailed error messages
 
+### Security Considerations
+- Ensure the category where this component is enabled has restricted visibility
+- Only users you trust to create and edit all shared drafts should be able to view the category
+- Remember that shared drafts bypass normal create/reply/edit permissions
+
 ## Technical Details
 
 This theme component:
@@ -90,6 +98,7 @@ https://github.com/dereklputnam/discourse-shared-draft-button
 ## Changelog
 
 ### Latest Version
-- Removed all permission checks - button now appears for all users in the configured category
+- Removed all permission checks - button now appears for all users who can view the configured category
 - Simplified codebase by removing group and category permission validation
-- Discourse's built-in permissions still apply when creating shared drafts
+- Added security warnings about shared draft permissions bypassing normal category restrictions
+- Important: Shared drafts allow anyone who can view the category to create/edit all drafts
