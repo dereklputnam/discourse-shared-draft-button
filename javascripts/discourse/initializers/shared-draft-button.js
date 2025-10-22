@@ -5,8 +5,13 @@ export default {
   
   initialize(container, settings) {
     withPluginApi("0.8.31", (api) => {
-      console.log("Shared Draft Button: Initializing - VERSION 2025-01-SEPARATE-BUTTON");
+      console.log("Shared Draft Button: Initializing - VERSION 2025-01-SETTINGS-DEBUG");
       console.log("Shared Draft Button: CRITICAL DEBUG - This should appear if new version loaded");
+
+      // CRITICAL: Log what settings we received
+      console.log("Shared Draft Button: Received settings parameter:", settings);
+      console.log("Shared Draft Button: Settings keys:", settings ? Object.keys(settings) : "settings is null/undefined");
+      console.log("Shared Draft Button: enabled_category from parameter:", settings ? settings.enabled_category : "N/A");
 
       // Log helpful link to shared drafts settings
       const baseUrl = window.location.origin;
