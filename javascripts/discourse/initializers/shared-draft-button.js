@@ -5,239 +5,106 @@ export default {
   name: "shared-draft-button",
 
   initialize(container, settings) {
-    // ULTRA CRITICAL DEBUG: Log what we receive
-    console.log("=== SHARED DRAFT BUTTON: INITIALIZATION START ===");
-    console.log("Container:", container);
-    console.log("Settings parameter:", settings);
-    console.log("this.settings:", this.settings);
-    console.log("Arguments:", arguments);
-
-    // Try both methods - parameter and this.settings
-    const themeSettings = settings || this.settings || {};
-    console.log("Theme settings object (using parameter or this.settings):", themeSettings);
-    console.log("Theme settings keys:", Object.keys(themeSettings));
-    console.log("enabled_category:", themeSettings.enabled_category);
-
     withPluginApi("0.8.31", (api) => {
-      console.log("Shared Draft Button: Initializing - VERSION 2025-01-FIX-SETTINGS");
-      console.log("Shared Draft Button: Using settings from this.settings");
+      console.log("Shared Draft Button: Initializing...");
 
       // Log helpful link to shared drafts settings
       const baseUrl = window.location.origin;
       const sharedDraftsSettingsUrl = baseUrl + '/admin/site_settings/category/all_results?filter=shared_drafts';
       console.log("Shared Draft Button: Configure shared drafts at:", sharedDraftsSettingsUrl);
-      // Reduced debugging - uncomment lines below for troubleshooting
-      // console.log("Shared Draft Button: arguments.length:", arguments.length);
-      // console.log("Shared Draft Button: Received settings parameter:", settings);
-      
-      // Minimal settings debugging - only show if we need to troubleshoot
-      if (settings && typeof settings === 'object' && Object.keys(settings).some(key => 
-        key.includes('category') || key.includes('enabled') || key.includes('button') || key.includes('staff') || key.includes('hide')
-      )) {
-        console.log("Shared Draft Button: Found theme settings in parameter");
-        for (const key in settings) {
-          if (key.includes('category') || key.includes('enabled') || key.includes('button') || key.includes('staff') || key.includes('hide')) {
-            console.log("  ", key, ":", JSON.stringify(settings[key]));
-          }
-        }
-      }
 
-      // Default settings
-      let finalSettings = {
-        button_text: "New Shared Draft",
-        enabled_category: "",
-        require_shared_drafts_enabled: true
+      // Default settings with values from the settings parameter
+      const componentSettings = {
+        button_text: (settings && settings.button_text) || "New Shared Draft",
+        enabled_category: (settings && settings.enabled_category) || "",
+        require_shared_drafts_enabled: (settings && settings.require_shared_drafts_enabled !== undefined) ? settings.require_shared_drafts_enabled : true
       };
 
-      // Method 1: Use settings from parameter or this.settings
-      if (themeSettings && typeof themeSettings === 'object' && Object.keys(themeSettings).length > 0) {
-        finalSettings = Object.assign({}, finalSettings, themeSettings);
-        console.log("Shared Draft Button: Loaded settings from parameter/this.settings");
-        console.log("Shared Draft Button: Settings:", themeSettings);
-        console.log("Shared Draft Button: finalSettings after merge:", finalSettings);
-      }
+      console.log("Shared Draft Button: Settings:", componentSettings);
 
-      // Method 2: Fallback to service lookup ONLY if we got NO settings at all
-      const hasSettings = themeSettings && typeof themeSettings === 'object' && Object.keys(themeSettings).length > 0;
-      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
-        console.log("Shared Draft Button: Settings parameter didn't provide category, trying service lookup...");
-        
-        try {
-          const serviceSettings = container.lookup("service:theme-settings");
-          console.log("Shared Draft Button: service:theme-settings result:", serviceSettings);
-          if (serviceSettings && typeof serviceSettings === 'object') {
-            finalSettings = Object.assign({}, finalSettings, serviceSettings);
-            console.log("Shared Draft Button: Loaded theme settings via service");
-          }
-        } catch (e) {
-          console.log("Shared Draft Button: service method failed:", e);
+      // Function to detect the current category from the URL and page context
+      function getCurrentCategoryId() {
+        console.log('Shared Draft Button: Detecting current category...');
+        console.log('Shared Draft Button: Current URL:', window.location.pathname);
+
+        // Method 1: Extract from URL path (most reliable)
+        // Matches patterns like /c/category-name/123 or /c/123
+        const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/(\d+)|\/c\/(\d+)|\/(\d+)(?:\/|$)/);
+        if (pathMatch) {
+          const categoryId = pathMatch[1] || pathMatch[2] || pathMatch[3];
+          console.log('Shared Draft Button: Found category ID in URL path:', categoryId);
+          return categoryId;
         }
-      }
 
-      // Method 3: Try accessing settings via the container with theme name (ONLY if we have no settings)
-      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
-        console.log("Shared Draft Button: Still no category, trying theme-specific lookup...");
-        
-        try {
-          // Try different theme settings service names
-          const themeSettingsServices = [
-            "theme-settings:discourse-shared-draft-button",
-            "theme-settings:shared-draft-button", 
-            "settings:theme",
-            "service:theme-settings"
-          ];
-          
-          for (const serviceName of themeSettingsServices) {
-            try {
-              console.log("Shared Draft Button: Trying service:", serviceName);
-              const themeSettings = container.lookup(serviceName);
-              console.log("Shared Draft Button:", serviceName, "result:", themeSettings);
-              if (themeSettings && typeof themeSettings === 'object' && themeSettings.enabled_category) {
-                finalSettings = Object.assign({}, finalSettings, themeSettings);
-                console.log("Shared Draft Button: Successfully loaded settings via", serviceName);
-                break;
-              }
-            } catch (e) {
-              console.log("Shared Draft Button:", serviceName, "failed:", e.message);
-            }
-          }
-        } catch (e) {
-          console.log("Shared Draft Button: theme-specific lookup failed:", e);
+        // Method 2: Check URL hash
+        const hashMatch = window.location.hash.match(/\/(\d+)(?:\/|$)/);
+        if (hashMatch) {
+          const categoryId = hashMatch[1];
+          console.log('Shared Draft Button: Found category ID in URL hash:', categoryId);
+          return categoryId;
         }
-      }
-      
-      // Method 4: Try accessing theme settings from Discourse.__container__ (ONLY if we have no settings)
-      if (!hasSettings && (!finalSettings.enabled_category || finalSettings.enabled_category === "")) {
-        console.log("Shared Draft Button: Still no category, trying Discourse container...");
-        
-        try {
-          if (typeof Discourse !== 'undefined' && Discourse.__container__) {
-            console.log("Shared Draft Button: Discourse container available");
-            
-            // List all available services to see what's there
-            const services = Discourse.__container__.cache || {};
-            console.log("Shared Draft Button: Available services:", Object.keys(services).filter(k => k.includes('theme') || k.includes('settings')));
-            
-            // Try multiple service lookups
-            const serviceAttempts = [
-              "service:theme-settings", 
-              "theme-settings:main",
-              "theme:settings"
-            ];
-            
-            for (const service of serviceAttempts) {
-              try {
-                const result = Discourse.__container__.lookup(service);
-                console.log("Shared Draft Button: Discourse", service, "result:", result);
-                if (result && typeof result === 'object' && result.enabled_category) {
-                  finalSettings = Object.assign({}, finalSettings, result);
-                  console.log("Shared Draft Button: Successfully loaded via Discourse", service);
-                  break;
-                }
-              } catch (e) {
-                console.log("Shared Draft Button: Discourse", service, "failed:", e.message);
-              }
-            }
-          }
-        } catch (e) {
-          console.log("Shared Draft Button: Discourse container access failed:", e);
+
+        // Method 3: Check query params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('category')) {
+          const categoryId = urlParams.get('category');
+          console.log('Shared Draft Button: Found category ID in query param:', categoryId);
+          return categoryId;
         }
-      }
 
-      console.log("Shared Draft Button: Final settings being used:", finalSettings);
-      console.log("Shared Draft Button: enabled_category value:", JSON.stringify(finalSettings.enabled_category), "type:", typeof finalSettings.enabled_category);
-
-      // FALLBACK: If settings are completely empty (remote theme settings not loaded),
-      // use environment-specific defaults. This helps when the component is installed
-      // as a remote GitHub theme where custom settings can't be saved.
-      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
-        console.warn("Shared Draft Button: WARNING - No enabled_category found in settings!");
-        console.warn("Shared Draft Button: This usually means the theme is installed as a remote theme from GitHub.");
-        console.warn("Shared Draft Button: Settings configured in the UI won't work for remote themes.");
-        console.warn("Shared Draft Button: To use custom settings, either:");
-        console.warn("Shared Draft Button:   1. Make a local copy of this theme component, OR");
-        console.warn("Shared Draft Button:   2. Fork the repo and point to your fork, OR");
-        console.warn("Shared Draft Button:   3. Hardcode your category ID in the component");
-      }
-
-      // LAST RESORT: Try to access theme settings directly from the DOM or window
-      if (!finalSettings.enabled_category || finalSettings.enabled_category === "") {
-        console.log("Shared Draft Button: Trying last resort - checking for settings in window/DOM");
-
-        // Try to find theme settings in the window object
-        if (typeof window !== 'undefined') {
-          // Check if theme settings are exposed anywhere
-          if (window.PreloadStore && window.PreloadStore.data && window.PreloadStore.data.theme) {
-            console.log("Shared Draft Button: Found PreloadStore.theme:", window.PreloadStore.data.theme);
-          }
-
-          // Try to access via the registry
-          try {
-            if (container && container.registry) {
-              console.log("Shared Draft Button: Registry entries:", container.registry.registrations);
-            }
-          } catch (e) {
-            console.log("Shared Draft Button: Could not access registry:", e);
-          }
+        // Method 4: Check DOM for category data attributes
+        const categoryElement = document.querySelector('[data-category-id]');
+        if (categoryElement) {
+          const categoryId = categoryElement.getAttribute('data-category-id');
+          console.log('Shared Draft Button: Found category ID in DOM data attribute:', categoryId);
+          return categoryId;
         }
-      }
 
-      // Use finalSettings for the rest of the code (can't reassign settings variable)
-      const componentSettings = finalSettings;
+        // Method 5: Check body class names (e.g., category-167)
+        const bodyClassMatch = document.body.className.match(/category-(\d+)/);
+        if (bodyClassMatch) {
+          const categoryId = bodyClassMatch[1];
+          console.log('Shared Draft Button: Found category ID in body class:', categoryId);
+          return categoryId;
+        }
+
+        // Method 6: Check meta tags
+        const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
+        if (categoryMeta && categoryMeta.content) {
+          const categoryId = categoryMeta.content;
+          console.log('Shared Draft Button: Found category ID in meta tag:', categoryId);
+          return categoryId;
+        }
+
+        console.log('Shared Draft Button: No category ID detected');
+        return null;
+      }
 
       // Function to check if we should override the button
       function shouldOverrideButton() {
-        console.log('Shared Draft Button: shouldOverrideButton - enabled_category:', JSON.stringify(componentSettings.enabled_category));
+        console.log('Shared Draft Button: shouldOverrideButton - enabled_category setting:', JSON.stringify(componentSettings.enabled_category));
 
-        // If no category restriction is set, don't show anywhere
-        if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
-          console.log('Shared Draft Button: No enabled category - returning false');
+        // Get the current category from the page
+        const currentCategoryId = getCurrentCategoryId();
+        console.log('Shared Draft Button: Current category ID detected:', currentCategoryId);
+
+        // If no current category detected, don't show button
+        if (!currentCategoryId) {
+          console.log('Shared Draft Button: No current category detected - returning false');
           return false;
         }
 
-        const targetCategoryId = componentSettings.enabled_category.toString();
-        console.log('Shared Draft Button: Target category ID:', targetCategoryId);
-        console.log('Shared Draft Button: Current URL:', window.location.pathname);
-        console.log('Shared Draft Button: Current URL hash:', window.location.hash);
-        console.log('Shared Draft Button: Current URL search:', window.location.search);
-
-        // Check if URL contains the target category ID in various patterns
-        const urlHasCategory = window.location.pathname.includes('/' + targetCategoryId) ||
-                              window.location.pathname.includes('/c/' + targetCategoryId) ||
-                              window.location.hash.includes('/' + targetCategoryId) ||
-                              window.location.search.includes('category=' + targetCategoryId);
-
-        // Also check for category element in DOM with multiple selectors
-        const categorySelectors = [
-          '[data-category-id="' + targetCategoryId + '"]',
-          '.category-' + targetCategoryId,
-          '[data-category="' + targetCategoryId + '"]'
-        ];
-
-        let categoryElement = null;
-        for (const selector of categorySelectors) {
-          categoryElement = document.querySelector(selector);
-          if (categoryElement) {
-            console.log('Shared Draft Button: Found category element with selector:', selector);
-            break;
-          }
+        // If a specific category is configured in settings, only show in that category
+        if (componentSettings.enabled_category && componentSettings.enabled_category !== "") {
+          const targetCategoryId = componentSettings.enabled_category.toString();
+          const shouldShow = currentCategoryId === targetCategoryId;
+          console.log('Shared Draft Button: Setting restricts to category', targetCategoryId, '- current is', currentCategoryId, '- showing:', shouldShow);
+          return shouldShow;
         }
 
-        // Also check body class for category
-        const bodyHasCategory = document.body.className.includes('category-' + targetCategoryId);
-
-        // Check for category in meta tags
-        const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
-        const metaHasCategory = categoryMeta && categoryMeta.content === targetCategoryId;
-
-        console.log('Shared Draft Button: URL check:', urlHasCategory, 'DOM check:', !!categoryElement, 'Body check:', bodyHasCategory, 'Meta check:', metaHasCategory);
-        console.log('Shared Draft Button: Body classes:', document.body.className);
-
-        const shouldOverride = urlHasCategory || !!categoryElement || bodyHasCategory || metaHasCategory;
-
-        console.log('Shared Draft Button: Final decision - shouldOverride:', shouldOverride);
-
-        return shouldOverride;
+        // If no category restriction in settings, show in any category that's detected
+        console.log('Shared Draft Button: No category restriction in settings - showing button in current category:', currentCategoryId);
+        return true;
       }
 
       // Function to create shared draft - exact copy of your working approach
@@ -330,8 +197,8 @@ export default {
             try {
               console.log('Shared Draft Button: Trying createSharedDraft action');
 
-              // Get the current category ID for default
-              const currentCategoryId = componentSettings.enabled_category;
+              // Get the current category ID dynamically
+              const currentCategoryId = getCurrentCategoryId();
               console.log('Shared Draft Button: Setting default category to:', currentCategoryId);
               
               composer.open({
@@ -352,7 +219,7 @@ export default {
               // Method 3: Fallback to regular topic creation and try to modify it
               console.log('Shared Draft Button: Trying fallback approach...');
 
-              const currentCategoryId = componentSettings.enabled_category;
+              const currentCategoryId = getCurrentCategoryId();
               console.log('Shared Draft Button: Fallback - Setting default category to:', currentCategoryId);
               
               composer.open({

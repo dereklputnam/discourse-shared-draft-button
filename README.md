@@ -4,15 +4,16 @@ A Discourse theme component that adds a "New Shared Draft" button in a specific 
 
 ## Features
 
-- **Single category focus**: Only appears in the one category you configure
+- **Automatic category detection**: Dynamically detects which category you're viewing from the URL and page context
+- **Optional category filtering**: Configure a specific category ID to restrict the button to only that category
 - **Non-intrusive design**: Hides the standard "New Topic" button and adds a separate "New Shared Draft" button
 - **Simple and accessible**: Shows the shared draft button to all users who can view the category
 - **Seamless integration**: Works with Discourse's built-in shared draft functionality
 - **SPA-aware**: Handles Discourse's single-page app navigation automatically
 - **Customizable button text**: Change the button text to match your needs
-- **Smart detection**: Automatically detects the current category via URL, DOM, and meta tags
+- **Multi-method detection**: Uses URL patterns, DOM attributes, body classes, and meta tags to identify the current category
 - **Composer integration**: Opens the composer in shared draft mode with the correct category pre-selected
-- **Enhanced error handling**: Robust error handling with comprehensive logging
+- **No hardcoded values**: Works out-of-the-box for any Discourse installation
 
 ## Installation
 
@@ -28,7 +29,7 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ### Settings
 
-- **Enabled Category** *(required)*: Enter the single category ID where the Shared Draft button should appear. Only one category is supported.
+- **Enabled Category** *(optional)*: Enter a category ID to restrict the Shared Draft button to only that category. Leave empty to show the button in all categories (wherever you're viewing).
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
 
@@ -56,25 +57,32 @@ After installation, configure the component in Admin → Customize → Themes �
 
 ## How It Works
 
-1. **Category Detection**: Detects when a user is viewing the specific configured category using multiple methods:
+1. **Automatic Category Detection**: The component automatically detects which category you're currently viewing using multiple methods (in order of priority):
    - URL path analysis (e.g., `/c/category-name/123`)
+   - URL hash fragments
+   - Query parameters
    - DOM elements with category data attributes
-   - Body class names
+   - Body class names (e.g., `category-123`)
    - Meta tags
 
-2. **Button Management**:
-   - **In the configured category**: Hides the original "New Topic" button and inserts a new "New Shared Draft" button
-   - **In other categories**: Removes the shared draft button (if present) and shows the original "New Topic" button
+2. **Smart Button Display**:
+   - **If you configure a category ID**: Button only appears when viewing that specific category
+   - **If you leave category ID empty**: Button appears in any category you're viewing
+   - Always detects the current category dynamically from the page context
+
+3. **Button Management**:
+   - **When conditions are met**: Hides the original "New Topic" button and inserts a new "New Shared Draft" button
+   - **When conditions aren't met**: Removes the shared draft button (if present) and shows the original "New Topic" button
    - Uses completely separate buttons to avoid any interference
 
-3. **SPA Navigation Handling**:
+4. **SPA Navigation Handling**:
    - Listens for Discourse's route changes via `api.onPageChange()`
    - Re-evaluates button state with multiple retry attempts (100ms, 300ms, 600ms delays)
    - Watches DOM changes with MutationObserver for dynamic content
 
-4. **Composer Integration**:
+5. **Composer Integration**:
    - Opens the Discourse composer in shared draft mode
-   - Automatically pre-selects the correct category for the new shared draft
+   - Automatically pre-selects the current category for the new shared draft
    - Includes safety check to prevent shared draft creation in wrong categories
 
 ## Troubleshooting
@@ -87,8 +95,8 @@ After installation, configure the component in Admin → Customize → Themes �
 - Check browser console for debugging information
 
 ### Button Appearing in Wrong Places
-- Check the "Enabled Category" setting - it should contain the exact category ID you want
-- The component only supports one category at a time
+- If you configured a specific category ID, verify it matches the category where the button appears
+- Remember: if you leave the "Enabled Category" setting empty, the button will appear in ALL categories
 - Try hard refreshing the page (Ctrl+Shift+R or Cmd+Shift+R) to clear cached JavaScript
 
 ### Button Not Updating When Navigating
@@ -111,13 +119,14 @@ After installation, configure the component in Admin → Customize → Themes �
 This theme component:
 - Uses Modern Discourse Plugin API (0.8.31+)
 - Written in ES6 JavaScript with comprehensive error handling
-- Leverages Discourse's container system for service access
+- **Automatic category detection**: Dynamically determines current category from URL and page context
+- **No theme settings dependency**: Works even if theme settings don't load properly
 - Uses `api.onPageChange()` to handle SPA route transitions
 - Uses MutationObserver for dynamic content handling
 - Creates separate button elements (`#create-shared-draft-button`) instead of modifying the original
 - Hides/shows buttons using `display: none` style property
-- Includes extensive debugging and logging capabilities
 - Multiple retry attempts ensure button state updates reliably
+- Supports optional category filtering via theme settings
 
 ## License
 
@@ -131,9 +140,11 @@ https://github.com/dereklputnam/discourse-shared-draft-button
 ## Changelog
 
 ### Latest Version
-- **Major refactor**: Now uses separate button instead of modifying the original "New Topic" button
-- Hides original button and inserts independent `#create-shared-draft-button` in configured category
+- **Dynamic category detection**: Component now automatically detects which category you're viewing from URL and page context
+- **No hardcoded values**: Works for any Discourse installation without requiring specific configuration
+- **Optional category filtering**: Settings now optional - leave empty to show in all categories, or specify one to restrict
+- **Robust and reliable**: No longer depends on theme settings loading correctly
+- **Major refactor**: Uses separate button instead of modifying the original "New Topic" button
 - Improved SPA navigation handling with multiple retry attempts and route change detection
 - Added safety checks to prevent shared draft creation in wrong categories
-- Completely eliminates interference with original "New Topic" button functionality
 - Better reliability when navigating between categories without full page refresh
