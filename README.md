@@ -13,7 +13,7 @@ A Discourse theme component that adds a "New Shared Draft" button in a specific 
 - **Customizable button text**: Change the button text to match your needs
 - **Multi-method detection**: Uses URL patterns, DOM attributes, body classes, and meta tags to identify the current category
 - **Composer integration**: Opens the composer in shared draft mode with the correct category pre-selected
-- **No hardcoded values**: Works out-of-the-box for any Discourse installation
+- **Configurable via code**: Category ID can be set directly in the JavaScript file (see Configuration)
 
 ## Installation
 
@@ -25,13 +25,25 @@ A Discourse theme component that adds a "New Shared Draft" button in a specific 
 
 ## Configuration
 
-After installation, configure the component in Admin → Customize → Themes → [Your Theme] → Settings:
+**⚠️ Important Setup Note**: Due to a known issue with Discourse theme component settings loading, you may need to manually configure the category ID in the code.
 
-### Settings
+### Option 1: Edit the Code (Recommended for now)
 
-- **Enabled Category** *(required)*: Enter the category ID where the Shared Draft button should appear (e.g., "167"). The button will only show when viewing this specific category.
+1. Go to Admin → Customize → Themes → Shared Draft Button → Edit CSS/HTML
+2. Click on the "javascripts/discourse/initializers/shared-draft-button.js" file
+3. Find line 26: `const FALLBACK_CATEGORY = "170";`
+4. Change `"170"` to your category ID
+5. Save changes
+
+### Option 2: Theme Settings (May not work)
+
+If theme settings are loading properly in your Discourse installation:
+
+- **Enabled Category** *(required)*: Enter the category ID where the Shared Draft button should appear (e.g., "167")
 - **Button Text** *(optional)*: Customize the text shown on the button (default: "New Shared Draft")
 - **Require Shared Drafts Enabled** *(optional)*: Only show the button when shared drafts are enabled in site settings (default: true)
+
+**Note**: There's currently an issue where theme component settings don't load properly for remote themes. The component uses a hardcoded fallback (`FALLBACK_CATEGORY`) until this is resolved.
 
 ## How to Find Your Category ID
 
@@ -120,7 +132,7 @@ This theme component:
 - Uses Modern Discourse Plugin API (0.8.31+)
 - Written in ES6 JavaScript with comprehensive error handling
 - **Automatic category detection**: Dynamically determines current category from URL and page context
-- **No theme settings dependency**: Works even if theme settings don't load properly
+- **Hardcoded fallback**: Uses `FALLBACK_CATEGORY` constant if theme settings don't load (common with remote themes)
 - Uses `api.onPageChange()` to handle SPA route transitions
 - Uses MutationObserver for dynamic content handling
 - Creates separate button elements (`#create-shared-draft-button`) instead of modifying the original
@@ -140,10 +152,10 @@ https://github.com/dereklputnam/discourse-shared-draft-button
 ## Changelog
 
 ### Latest Version
-- **Dynamic category detection**: Component now automatically detects which category you're viewing from URL and page context
-- **No hardcoded values**: Works for any Discourse installation without requiring specific configuration
-- **Optional category filtering**: Settings now optional - leave empty to show in all categories, or specify one to restrict
-- **Robust and reliable**: No longer depends on theme settings loading correctly
+- **Dynamic category detection**: Component automatically detects which category you're viewing from URL and page context
+- **Hardcoded fallback system**: Uses `FALLBACK_CATEGORY` constant as fallback when theme settings don't load
+- **Known issue**: Theme component settings don't load properly for remote themes - requires manual code edit for category ID
+- **Robust category matching**: Works reliably once category ID is configured
 - **Major refactor**: Uses separate button instead of modifying the original "New Topic" button
 - Improved SPA navigation handling with multiple retry attempts and route change detection
 - Added safety checks to prevent shared draft creation in wrong categories
