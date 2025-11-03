@@ -9,15 +9,49 @@ export default {
     // This is the correct way to access theme component settings in Discourse
     const themeSettings = this.settings || {};
     console.log('[Shared Draft Button] this.settings:', themeSettings);
+    console.log('[Shared Draft Button] typeof this.settings:', typeof themeSettings);
     console.log('[Shared Draft Button] settings keys:', Object.keys(themeSettings));
-    console.log('[Shared Draft Button] enabled_category:', themeSettings.enabled_category);
+
+    // Try different ways to access the property
+    console.log('[Shared Draft Button] Direct access - enabled_category:', themeSettings.enabled_category);
+    console.log('[Shared Draft Button] Bracket access - enabled_category:', themeSettings['enabled_category']);
+
+    // Check if it's a getter
+    const descriptor = Object.getOwnPropertyDescriptor(themeSettings, 'enabled_category');
+    console.log('[Shared Draft Button] Property descriptor:', descriptor);
+
+    // Try to get all property names including getters
+    const allProps = Object.getOwnPropertyNames(themeSettings);
+    console.log('[Shared Draft Button] All own properties:', allProps);
+
+    // Check prototype chain
+    if (Object.getPrototypeOf(themeSettings)) {
+      const protoProps = Object.getOwnPropertyNames(Object.getPrototypeOf(themeSettings));
+      console.log('[Shared Draft Button] Prototype properties:', protoProps);
+    }
 
     withPluginApi("0.8.31", (api) => {
-      // Use settings from this.settings (captured above)
+      // Try accessing via get method if it exists
+      let enabled_category = "";
+      let button_text = "New Shared Draft";
+      let require_shared_drafts_enabled = true;
+
+      // Try multiple access patterns
+      if (typeof themeSettings.get === 'function') {
+        console.log('[Shared Draft Button] Settings has .get() method');
+        enabled_category = themeSettings.get('enabled_category') || "";
+        button_text = themeSettings.get('button_text') || "New Shared Draft";
+        require_shared_drafts_enabled = themeSettings.get('require_shared_drafts_enabled');
+      } else {
+        enabled_category = themeSettings.enabled_category || themeSettings['enabled_category'] || "";
+        button_text = themeSettings.button_text || themeSettings['button_text'] || "New Shared Draft";
+        require_shared_drafts_enabled = themeSettings.require_shared_drafts_enabled;
+      }
+
       const componentSettings = {
-        button_text: themeSettings.button_text || "New Shared Draft",
-        enabled_category: themeSettings.enabled_category || "",
-        require_shared_drafts_enabled: themeSettings.require_shared_drafts_enabled !== undefined ? themeSettings.require_shared_drafts_enabled : true
+        button_text,
+        enabled_category,
+        require_shared_drafts_enabled: require_shared_drafts_enabled !== undefined ? require_shared_drafts_enabled : true
       };
 
       console.log('[Shared Draft Button] Final settings:', componentSettings);
