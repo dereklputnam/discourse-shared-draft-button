@@ -21,17 +21,19 @@ export default {
     }
 
     withPluginApi("0.8.31", (api) => {
-      // Extract settings - the enabled_category is coming through but as empty string
-      // This suggests the setting might not be saved properly or needs to be a string type
+      // TEMPORARY HARDCODED FALLBACK
+      // TODO: Figure out why theme settings aren't loading from Discourse admin
+      const FALLBACK_CATEGORY = "170"; // Change this to your category ID
+
       const componentSettings = {
         button_text: themeSettings.button_text || "New Shared Draft",
-        enabled_category: themeSettings.enabled_category || "",
+        enabled_category: themeSettings.enabled_category || FALLBACK_CATEGORY,
         require_shared_drafts_enabled: themeSettings.require_shared_drafts_enabled !== undefined ? themeSettings.require_shared_drafts_enabled : true
       };
 
       console.log('[Shared Draft Button] Component settings:', componentSettings);
-      console.log('[Shared Draft Button] enabled_category is empty?', componentSettings.enabled_category === "");
-      console.log('[Shared Draft Button] enabled_category is falsy?', !componentSettings.enabled_category);
+      console.log('[Shared Draft Button] Using hardcoded fallback:', !themeSettings.enabled_category);
+      console.log('[Shared Draft Button] Final enabled_category:', componentSettings.enabled_category);
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
