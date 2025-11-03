@@ -37,43 +37,52 @@ export default {
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
-        // Method 1: Extract from URL path (most reliable)
-        // Matches patterns like /c/category-name/123 or /c/123
-        const pathMatch = window.location.pathname.match(/\/c\/[^\/]+\/(\d+)|\/c\/(\d+)/);
+        console.log('[Shared Draft Button] Detecting category from URL:', window.location.pathname);
+
+        // Method 1: Extract from URL path
+        // Match patterns like: /c/category-name/123, /c/123, /category-slug/170, etc.
+        const pathMatch = window.location.pathname.match(/\/(\d+)(?:\/|$)/);
         if (pathMatch) {
-          return pathMatch[1] || pathMatch[2];
+          console.log('[Shared Draft Button] Found category in path:', pathMatch[1]);
+          return pathMatch[1];
         }
 
         // Method 2: Check URL hash
         const hashMatch = window.location.hash.match(/\/(\d+)(?:\/|$)/);
         if (hashMatch) {
+          console.log('[Shared Draft Button] Found category in hash:', hashMatch[1]);
           return hashMatch[1];
         }
 
         // Method 3: Check query params
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('category')) {
+          console.log('[Shared Draft Button] Found category in query:', urlParams.get('category'));
           return urlParams.get('category');
         }
 
         // Method 4: Check DOM for category data attributes
         const categoryElement = document.querySelector('[data-category-id]');
         if (categoryElement) {
+          console.log('[Shared Draft Button] Found category in DOM:', categoryElement.getAttribute('data-category-id'));
           return categoryElement.getAttribute('data-category-id');
         }
 
-        // Method 5: Check body class names (e.g., category-167)
+        // Method 5: Check body class names (e.g., category-170)
         const bodyClassMatch = document.body.className.match(/category-(\d+)/);
         if (bodyClassMatch) {
+          console.log('[Shared Draft Button] Found category in body class:', bodyClassMatch[1]);
           return bodyClassMatch[1];
         }
 
         // Method 6: Check meta tags
         const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
         if (categoryMeta && categoryMeta.content) {
+          console.log('[Shared Draft Button] Found category in meta:', categoryMeta.content);
           return categoryMeta.content;
         }
 
+        console.log('[Shared Draft Button] No category detected');
         return null;
       }
 
