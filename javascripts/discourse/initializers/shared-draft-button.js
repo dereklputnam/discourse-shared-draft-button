@@ -6,14 +6,37 @@ export default {
 
   initialize(container, settings) {
     withPluginApi("0.8.31", (api) => {
-      // Default settings with values from the settings parameter
-      const componentSettings = {
-        button_text: (settings && settings.button_text) || "New Shared Draft",
-        enabled_category: (settings && settings.enabled_category) || "",
-        require_shared_drafts_enabled: (settings && settings.require_shared_drafts_enabled !== undefined) ? settings.require_shared_drafts_enabled : true
+      // Try multiple methods to get settings
+      let componentSettings = {
+        button_text: "New Shared Draft",
+        enabled_category: "",
+        require_shared_drafts_enabled: true
       };
 
-      console.log('[Shared Draft Button] Initialized with settings:', componentSettings);
+      // Method 1: Use settings parameter
+      if (settings) {
+        console.log('[Shared Draft Button] Settings parameter:', settings);
+        if (settings.button_text) componentSettings.button_text = settings.button_text;
+        if (settings.enabled_category) componentSettings.enabled_category = settings.enabled_category;
+        if (settings.require_shared_drafts_enabled !== undefined) componentSettings.require_shared_drafts_enabled = settings.require_shared_drafts_enabled;
+      }
+
+      // Method 2: Try to get from theme settings service (fallback)
+      if (!componentSettings.enabled_category) {
+        try {
+          const themeSettings = container.lookup('service:theme-settings');
+          console.log('[Shared Draft Button] Theme settings service:', themeSettings);
+          if (themeSettings) {
+            if (themeSettings.enabled_category) componentSettings.enabled_category = themeSettings.enabled_category;
+            if (themeSettings.button_text) componentSettings.button_text = themeSettings.button_text;
+            if (themeSettings.require_shared_drafts_enabled !== undefined) componentSettings.require_shared_drafts_enabled = themeSettings.require_shared_drafts_enabled;
+          }
+        } catch (e) {
+          console.log('[Shared Draft Button] Could not access theme settings service:', e.message);
+        }
+      }
+
+      console.log('[Shared Draft Button] Final settings:', componentSettings);
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
