@@ -5,6 +5,9 @@ export default {
   name: "shared-draft-button",
 
   initialize(container, settings) {
+    console.log('[Shared Draft Button] this.settings:', this.settings);
+    console.log('[Shared Draft Button] settings parameter:', settings);
+
     withPluginApi("0.8.31", (api) => {
       // Try multiple methods to get settings
       let componentSettings = {
@@ -13,26 +16,27 @@ export default {
         require_shared_drafts_enabled: true
       };
 
-      // Method 1: Use settings parameter
-      if (settings) {
-        console.log('[Shared Draft Button] Settings parameter:', settings);
-        if (settings.button_text) componentSettings.button_text = settings.button_text;
-        if (settings.enabled_category) componentSettings.enabled_category = settings.enabled_category;
-        if (settings.require_shared_drafts_enabled !== undefined) componentSettings.require_shared_drafts_enabled = settings.require_shared_drafts_enabled;
+      // Method 1: Try this.settings (component instance settings)
+      const settingsSource = this.settings || settings;
+      console.log('[Shared Draft Button] Using settings source:', settingsSource);
+
+      if (settingsSource) {
+        if (settingsSource.button_text) componentSettings.button_text = settingsSource.button_text;
+        if (settingsSource.enabled_category) componentSettings.enabled_category = settingsSource.enabled_category;
+        if (settingsSource.require_shared_drafts_enabled !== undefined) componentSettings.require_shared_drafts_enabled = settingsSource.require_shared_drafts_enabled;
       }
 
-      // Method 2: Try to get from theme settings service (fallback)
-      if (!componentSettings.enabled_category) {
+      // Method 2: Try to get from Discourse site settings as last resort
+      if (!componentSettings.enabled_category && typeof Discourse !== 'undefined') {
         try {
-          const themeSettings = container.lookup('service:theme-settings');
-          console.log('[Shared Draft Button] Theme settings service:', themeSettings);
-          if (themeSettings) {
-            if (themeSettings.enabled_category) componentSettings.enabled_category = themeSettings.enabled_category;
-            if (themeSettings.button_text) componentSettings.button_text = themeSettings.button_text;
-            if (themeSettings.require_shared_drafts_enabled !== undefined) componentSettings.require_shared_drafts_enabled = themeSettings.require_shared_drafts_enabled;
+          const siteSettings = Discourse.SiteSettings;
+          console.log('[Shared Draft Button] Checking site settings...');
+          // Look for theme-specific settings (Discourse auto-prefixes with theme name)
+          if (siteSettings && siteSettings.theme_translations) {
+            console.log('[Shared Draft Button] Theme translations:', siteSettings.theme_translations);
           }
         } catch (e) {
-          console.log('[Shared Draft Button] Could not access theme settings service:', e.message);
+          console.log('[Shared Draft Button] Could not access site settings:', e.message);
         }
       }
 
