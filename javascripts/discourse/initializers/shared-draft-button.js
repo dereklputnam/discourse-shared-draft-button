@@ -8,21 +8,53 @@ export default {
     const settings = this.settings;
 
     withPluginApi("0.8.31", (api) => {
-      // Access settings - they should be available via this.settings
+      console.log('[Shared Draft Button] Raw settings:', settings);
+      console.log('[Shared Draft Button] enabled_category raw value:', settings?.enabled_category);
+      console.log('[Shared Draft Button] enabled_category type:', typeof settings?.enabled_category);
+
+      // Check if settings is defined and has properties
+      let enabled_category = "";
+      if (settings && settings.enabled_category && settings.enabled_category !== "" && settings.enabled_category !== "0") {
+        // Settings loaded successfully
+        enabled_category = settings.enabled_category.toString().trim();
+        console.log('[Shared Draft Button] Got category from settings:', enabled_category);
+      } else {
+        // Settings not available - try localStorage as fallback
+        const stored = localStorage.getItem('shared_draft_button_category');
+        if (stored && stored !== "0") {
+          enabled_category = stored;
+          console.log('[Shared Draft Button] Using category from localStorage:', enabled_category);
+        }
+      }
+
       const componentSettings = {
         button_text: settings?.button_text || "New Shared Draft",
-        enabled_category: settings?.enabled_category || "",
+        enabled_category: enabled_category,
         require_shared_drafts_enabled: settings?.require_shared_drafts_enabled !== undefined ? settings.require_shared_drafts_enabled : true
       };
 
-      console.log('[Shared Draft Button] Settings loaded:', componentSettings);
+      console.log('[Shared Draft Button] Final component settings:', componentSettings);
 
-      // Exit early if no category configured
-      if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
-        console.warn('[Shared Draft Button] No enabled_category configured in theme settings.');
-        console.warn('[Shared Draft Button] Please set the category ID in Admin → Customize → Themes → Settings');
+      // Exit early if no category configured or set to "0" (disabled)
+      if (!componentSettings.enabled_category || componentSettings.enabled_category === "" || componentSettings.enabled_category === "0") {
+        console.warn('[Shared Draft Button] Component not active: enabled_category is', JSON.stringify(componentSettings.enabled_category));
+        console.warn('[Shared Draft Button] To activate, choose ONE of these methods:');
+        console.warn('[Shared Draft Button] 1. Set enabled_category in Admin → Customize → Themes → Settings');
+        console.warn('[Shared Draft Button] 2. If remote editing is disabled, run this in console:');
+        console.warn('[Shared Draft Button]    localStorage.setItem("shared_draft_button_category", "167")  // Replace 167 with your category ID');
+        console.warn('[Shared Draft Button] 3. Install as a local theme (export from GitHub, import to Discourse)');
+
+        // Expose a helper function globally
+        window.setSharedDraftCategory = function(categoryId) {
+          localStorage.setItem('shared_draft_button_category', categoryId.toString());
+          console.log('[Shared Draft Button] Category set to:', categoryId, '- Refresh the page to activate');
+        };
+        console.log('[Shared Draft Button] Quick setup: Run setSharedDraftCategory(167) in console (replace 167 with your category ID)');
+
         return;
       }
+
+      console.log('[Shared Draft Button] Component activated for category:', componentSettings.enabled_category);
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {

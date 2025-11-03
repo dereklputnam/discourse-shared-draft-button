@@ -1,7 +1,7 @@
 enabled_category:
   type: string
-  default: ""
-  description: "REQUIRED: Enter the category ID where the Shared Draft button should appear (e.g., '167'). The button will only appear when viewing this specific category."
+  default: "0"
+  description: "REQUIRED: Enter the category ID where the Shared Draft button should appear (e.g., '167'). The button will only appear when viewing this specific category. Set to '0' to disable."
 
 button_text:
   type: string
