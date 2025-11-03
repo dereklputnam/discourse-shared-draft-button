@@ -4,36 +4,25 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 export default {
   name: "shared-draft-button",
 
-  initialize(container, settings) {
-    // CRITICAL: Capture this.settings before entering withPluginApi
-    const themeSettings = this.settings || {};
-
-    // Log raw settings for debugging
-    console.log('[Shared Draft Button] Raw this.settings:', themeSettings);
-    console.log('[Shared Draft Button] enabled_category value:', themeSettings.enabled_category);
-    console.log('[Shared Draft Button] enabled_category type:', typeof themeSettings.enabled_category);
-    console.log('[Shared Draft Button] enabled_category length:', themeSettings.enabled_category?.length);
-
-    // Try iterating over properties in case they're enumerable
-    console.log('[Shared Draft Button] Iterating over settings:');
-    for (const key in themeSettings) {
-      console.log(`  ${key}:`, themeSettings[key]);
-    }
+  initialize(container) {
+    const settings = this.settings;
 
     withPluginApi("0.8.31", (api) => {
-      // TEMPORARY HARDCODED FALLBACK
-      // TODO: Figure out why theme settings aren't loading from Discourse admin
-      const FALLBACK_CATEGORY = "170"; // Change this to your category ID
-
+      // Access settings - they should be available via this.settings
       const componentSettings = {
-        button_text: themeSettings.button_text || "New Shared Draft",
-        enabled_category: themeSettings.enabled_category || FALLBACK_CATEGORY,
-        require_shared_drafts_enabled: themeSettings.require_shared_drafts_enabled !== undefined ? themeSettings.require_shared_drafts_enabled : true
+        button_text: settings?.button_text || "New Shared Draft",
+        enabled_category: settings?.enabled_category || "",
+        require_shared_drafts_enabled: settings?.require_shared_drafts_enabled !== undefined ? settings.require_shared_drafts_enabled : true
       };
 
-      console.log('[Shared Draft Button] Component settings:', componentSettings);
-      console.log('[Shared Draft Button] Using hardcoded fallback:', !themeSettings.enabled_category);
-      console.log('[Shared Draft Button] Final enabled_category:', componentSettings.enabled_category);
+      console.log('[Shared Draft Button] Settings loaded:', componentSettings);
+
+      // Exit early if no category configured
+      if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
+        console.warn('[Shared Draft Button] No enabled_category configured in theme settings.');
+        console.warn('[Shared Draft Button] Please set the category ID in Admin → Customize → Themes → Settings');
+        return;
+      }
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
