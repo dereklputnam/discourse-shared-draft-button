@@ -13,6 +13,8 @@ export default {
         require_shared_drafts_enabled: (settings && settings.require_shared_drafts_enabled !== undefined) ? settings.require_shared_drafts_enabled : true
       };
 
+      console.log('[Shared Draft Button] Initialized with settings:', componentSettings);
+
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
         // Method 1: Extract from URL path (most reliable)
@@ -59,11 +61,13 @@ export default {
       function shouldOverrideButton() {
         // If no category is configured in settings, don't show button anywhere
         if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
+          console.log('[Shared Draft Button] No enabled_category configured');
           return false;
         }
 
         // Get the current category from the page
         const currentCategoryId = getCurrentCategoryId();
+        console.log('[Shared Draft Button] Current category:', currentCategoryId, 'Target:', componentSettings.enabled_category);
 
         // If no current category detected, don't show button
         if (!currentCategoryId) {
@@ -72,7 +76,9 @@ export default {
 
         // Check if current category matches the configured category
         const targetCategoryId = componentSettings.enabled_category.toString();
-        return currentCategoryId === targetCategoryId;
+        const matches = currentCategoryId === targetCategoryId;
+        console.log('[Shared Draft Button] Category match:', matches);
+        return matches;
       }
 
       // Function to create shared draft
@@ -200,6 +206,8 @@ export default {
 
       // Main function to add the shared draft button
       function addSharedDraftButton() {
+        console.log('[Shared Draft Button] addSharedDraftButton called');
+
         // Check if we should show the shared draft button in this category
         const shouldShow = shouldOverrideButton();
 
@@ -208,6 +216,7 @@ export default {
 
         // If we shouldn't show but button exists, remove it and show original
         if (!shouldShow && existingSharedDraftButton) {
+          console.log('[Shared Draft Button] Removing button (not in target category)');
           removeSharedDraftButton();
           return false;
         }
@@ -225,14 +234,18 @@ export default {
 
         // If we should show and button already exists, nothing to do
         if (existingSharedDraftButton) {
+          console.log('[Shared Draft Button] Custom button already exists');
           return true;
         }
 
         // Find the original create topic button
         const createTopicButton = document.querySelector('#create-topic');
         if (!createTopicButton) {
+          console.log('[Shared Draft Button] Original button not found');
           return false;
         }
+
+        console.log('[Shared Draft Button] Adding custom button...');
 
         try {
           // Hide the original New Topic button
@@ -260,9 +273,11 @@ export default {
           // Insert the button after the original (hidden) button
           createTopicButton.parentNode.insertBefore(sharedDraftButton, createTopicButton.nextSibling);
 
+          console.log('[Shared Draft Button] Custom button added successfully');
           return true;
 
         } catch (error) {
+          console.error('[Shared Draft Button] Error adding button:', error);
           return false;
         }
       }
