@@ -6,55 +6,32 @@ export default {
 
   initialize(container, settings) {
     // CRITICAL: Capture this.settings before entering withPluginApi
-    // This is the correct way to access theme component settings in Discourse
     const themeSettings = this.settings || {};
-    console.log('[Shared Draft Button] this.settings:', themeSettings);
-    console.log('[Shared Draft Button] typeof this.settings:', typeof themeSettings);
-    console.log('[Shared Draft Button] settings keys:', Object.keys(themeSettings));
 
-    // Try different ways to access the property
-    console.log('[Shared Draft Button] Direct access - enabled_category:', themeSettings.enabled_category);
-    console.log('[Shared Draft Button] Bracket access - enabled_category:', themeSettings['enabled_category']);
+    // Log raw settings for debugging
+    console.log('[Shared Draft Button] Raw this.settings:', themeSettings);
+    console.log('[Shared Draft Button] enabled_category value:', themeSettings.enabled_category);
+    console.log('[Shared Draft Button] enabled_category type:', typeof themeSettings.enabled_category);
+    console.log('[Shared Draft Button] enabled_category length:', themeSettings.enabled_category?.length);
 
-    // Check if it's a getter
-    const descriptor = Object.getOwnPropertyDescriptor(themeSettings, 'enabled_category');
-    console.log('[Shared Draft Button] Property descriptor:', descriptor);
-
-    // Try to get all property names including getters
-    const allProps = Object.getOwnPropertyNames(themeSettings);
-    console.log('[Shared Draft Button] All own properties:', allProps);
-
-    // Check prototype chain
-    if (Object.getPrototypeOf(themeSettings)) {
-      const protoProps = Object.getOwnPropertyNames(Object.getPrototypeOf(themeSettings));
-      console.log('[Shared Draft Button] Prototype properties:', protoProps);
+    // Try iterating over properties in case they're enumerable
+    console.log('[Shared Draft Button] Iterating over settings:');
+    for (const key in themeSettings) {
+      console.log(`  ${key}:`, themeSettings[key]);
     }
 
     withPluginApi("0.8.31", (api) => {
-      // Try accessing via get method if it exists
-      let enabled_category = "";
-      let button_text = "New Shared Draft";
-      let require_shared_drafts_enabled = true;
-
-      // Try multiple access patterns
-      if (typeof themeSettings.get === 'function') {
-        console.log('[Shared Draft Button] Settings has .get() method');
-        enabled_category = themeSettings.get('enabled_category') || "";
-        button_text = themeSettings.get('button_text') || "New Shared Draft";
-        require_shared_drafts_enabled = themeSettings.get('require_shared_drafts_enabled');
-      } else {
-        enabled_category = themeSettings.enabled_category || themeSettings['enabled_category'] || "";
-        button_text = themeSettings.button_text || themeSettings['button_text'] || "New Shared Draft";
-        require_shared_drafts_enabled = themeSettings.require_shared_drafts_enabled;
-      }
-
+      // Extract settings - the enabled_category is coming through but as empty string
+      // This suggests the setting might not be saved properly or needs to be a string type
       const componentSettings = {
-        button_text,
-        enabled_category,
-        require_shared_drafts_enabled: require_shared_drafts_enabled !== undefined ? require_shared_drafts_enabled : true
+        button_text: themeSettings.button_text || "New Shared Draft",
+        enabled_category: themeSettings.enabled_category || "",
+        require_shared_drafts_enabled: themeSettings.require_shared_drafts_enabled !== undefined ? themeSettings.require_shared_drafts_enabled : true
       };
 
-      console.log('[Shared Draft Button] Final settings:', componentSettings);
+      console.log('[Shared Draft Button] Component settings:', componentSettings);
+      console.log('[Shared Draft Button] enabled_category is empty?', componentSettings.enabled_category === "");
+      console.log('[Shared Draft Button] enabled_category is falsy?', !componentSettings.enabled_category);
 
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
