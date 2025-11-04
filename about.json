@@ -1,10 +1,14 @@
 {
   "name": "Shared Draft Button",
-  "about_url": "https://github.com/dereklputnam/discourse-shared-draft-button",
+  "component": true,
   "license_url": "https://github.com/dereklputnam/discourse-shared-draft-button/blob/main/LICENSE",
+  "about_url": "https://github.com/dereklputnam/discourse-shared-draft-button",
   "authors": "Derek Putnam",
   "theme_version": "1.0.0",
   "minimum_discourse_version": "2.8.0",
-  "component": true,
-  "description": "Replaces the 'New Topic' button with 'New Shared Draft' in selected categories, streamlining the shared draft workflow for staff collaboration."
+  "maximum_discourse_version": null,
+  "assets": {},
+  "color_schemes": {},
+  "modifiers": {},
+  "learn_more": "https://meta.discourse.org/t/beginners-guide-to-using-discourse-themes/91966"
 }
