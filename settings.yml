@@ -7,8 +7,3 @@ button_text:
   type: string
   default: "New Shared Draft"
   description: "Text to display on the shared draft button"
-
-require_shared_drafts_enabled:
-  type: bool
-  default: true
-  description: "Only show the button when shared drafts are enabled in site settings.\n\nConfigure shared drafts at: Admin → Site Settings → Search 'shared_drafts' or visit /admin/site_settings/category/all_results?filter=shared_drafts"
