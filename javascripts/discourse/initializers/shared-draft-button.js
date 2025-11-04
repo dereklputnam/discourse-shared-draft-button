@@ -8,7 +8,7 @@ export default {
 
     withPluginApi("0.8.31", (api) => {
       // Get the target category from settings, with fallback to hardcoded value
-      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '167';
+      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '170';
 
       console.log('Shared Draft Button: Initializing for category ' + TARGET_CATEGORY_ID);
 
