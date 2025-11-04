@@ -6,7 +6,7 @@ export default {
   initialize() {
     withPluginApi("0.8.31", (api) => {
       // Hardcoded category ID - change this value to switch categories
-      const TARGET_CATEGORY_ID = '167';
+      const TARGET_CATEGORY_ID = '170';
 
       // Function to create shared draft
       function createSharedDraft(event) {
