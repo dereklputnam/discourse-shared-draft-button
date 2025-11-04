@@ -9,6 +9,7 @@ export default {
     withPluginApi("0.8.31", (api) => {
       // Get the target category from settings, with fallback
       const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '170';
+      const BUTTON_TEXT = settings?.button_text || 'New Shared Draft';
 
       // Exit early if category is explicitly disabled (set to empty or "0")
       if (TARGET_CATEGORY_ID === "" || TARGET_CATEGORY_ID === "0") {
@@ -176,7 +177,7 @@ export default {
           // Change the button text
           const buttonLabel = createTopicButton.querySelector('.d-button-label');
           if (buttonLabel) {
-            buttonLabel.textContent = 'New Shared Draft';
+            buttonLabel.textContent = BUTTON_TEXT;
           }
 
           // Change the icon to users icon
