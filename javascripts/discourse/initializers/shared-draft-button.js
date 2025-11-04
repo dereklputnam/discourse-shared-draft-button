@@ -7,11 +7,11 @@ export default {
     const settings = this.settings;
 
     withPluginApi("0.8.31", (api) => {
-      // Get the target category from settings
-      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString();
+      // Get the target category from settings, with fallback
+      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '170';
 
-      // Exit early if no category configured
-      if (!TARGET_CATEGORY_ID) {
+      // Exit early if category is explicitly disabled (set to empty or "0")
+      if (TARGET_CATEGORY_ID === "" || TARGET_CATEGORY_ID === "0") {
         return;
       }
 
