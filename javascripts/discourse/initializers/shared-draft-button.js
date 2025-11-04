@@ -8,22 +8,16 @@ export default {
     const settings = this.settings;
 
     withPluginApi("0.8.31", (api) => {
-      console.log('[Shared Draft Button] Raw settings:', settings);
-      console.log('[Shared Draft Button] enabled_category raw value:', settings?.enabled_category);
-      console.log('[Shared Draft Button] enabled_category type:', typeof settings?.enabled_category);
-
       // Check if settings is defined and has properties
       let enabled_category = "";
       if (settings && settings.enabled_category && settings.enabled_category !== "" && settings.enabled_category !== "0") {
         // Settings loaded successfully
         enabled_category = settings.enabled_category.toString().trim();
-        console.log('[Shared Draft Button] Got category from settings:', enabled_category);
       } else {
         // Settings not available - try localStorage as fallback
         const stored = localStorage.getItem('shared_draft_button_category');
         if (stored && stored !== "0") {
           enabled_category = stored;
-          console.log('[Shared Draft Button] Using category from localStorage:', enabled_category);
         }
       }
 
@@ -33,77 +27,50 @@ export default {
         require_shared_drafts_enabled: settings?.require_shared_drafts_enabled !== undefined ? settings.require_shared_drafts_enabled : true
       };
 
-      console.log('[Shared Draft Button] Final component settings:', componentSettings);
-
       // Exit early if no category configured or set to "0" (disabled)
       if (!componentSettings.enabled_category || componentSettings.enabled_category === "" || componentSettings.enabled_category === "0") {
-        console.warn('[Shared Draft Button] Component not active: enabled_category is', JSON.stringify(componentSettings.enabled_category));
-        console.warn('[Shared Draft Button] To activate, choose ONE of these methods:');
-        console.warn('[Shared Draft Button] 1. Set enabled_category in Admin → Customize → Themes → Settings');
-        console.warn('[Shared Draft Button] 2. If remote editing is disabled, run this in console:');
-        console.warn('[Shared Draft Button]    localStorage.setItem("shared_draft_button_category", "167")  // Replace 167 with your category ID');
-        console.warn('[Shared Draft Button] 3. Install as a local theme (export from GitHub, import to Discourse)');
-
-        // Expose a helper function globally
-        window.setSharedDraftCategory = function(categoryId) {
-          localStorage.setItem('shared_draft_button_category', categoryId.toString());
-          console.log('[Shared Draft Button] Category set to:', categoryId, '- Refresh the page to activate');
-        };
-        console.log('[Shared Draft Button] Quick setup: Run setSharedDraftCategory(167) in console (replace 167 with your category ID)');
-
         return;
       }
 
-      console.log('[Shared Draft Button] Component activated for category:', componentSettings.enabled_category);
-
       // Function to detect the current category from the URL and page context
       function getCurrentCategoryId() {
-        console.log('[Shared Draft Button] Detecting category from URL:', window.location.pathname);
-
         // Method 1: Extract from URL path
         // Match patterns like: /c/category-name/123, /c/123, /category-slug/170, etc.
         const pathMatch = window.location.pathname.match(/\/(\d+)(?:\/|$)/);
         if (pathMatch) {
-          console.log('[Shared Draft Button] Found category in path:', pathMatch[1]);
           return pathMatch[1];
         }
 
         // Method 2: Check URL hash
         const hashMatch = window.location.hash.match(/\/(\d+)(?:\/|$)/);
         if (hashMatch) {
-          console.log('[Shared Draft Button] Found category in hash:', hashMatch[1]);
           return hashMatch[1];
         }
 
         // Method 3: Check query params
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('category')) {
-          console.log('[Shared Draft Button] Found category in query:', urlParams.get('category'));
           return urlParams.get('category');
         }
 
         // Method 4: Check DOM for category data attributes
         const categoryElement = document.querySelector('[data-category-id]');
         if (categoryElement) {
-          console.log('[Shared Draft Button] Found category in DOM:', categoryElement.getAttribute('data-category-id'));
           return categoryElement.getAttribute('data-category-id');
         }
 
         // Method 5: Check body class names (e.g., category-170)
         const bodyClassMatch = document.body.className.match(/category-(\d+)/);
         if (bodyClassMatch) {
-          console.log('[Shared Draft Button] Found category in body class:', bodyClassMatch[1]);
           return bodyClassMatch[1];
         }
 
         // Method 6: Check meta tags
         const categoryMeta = document.querySelector('meta[name="discourse-category-id"]');
         if (categoryMeta && categoryMeta.content) {
-          console.log('[Shared Draft Button] Found category in meta:', categoryMeta.content);
           return categoryMeta.content;
         }
 
-        console.log('[Shared Draft Button] No category detected');
         return null;
       }
 
@@ -111,13 +78,11 @@ export default {
       function shouldOverrideButton() {
         // If no category is configured in settings, don't show button anywhere
         if (!componentSettings.enabled_category || componentSettings.enabled_category === "") {
-          console.log('[Shared Draft Button] No enabled_category configured');
           return false;
         }
 
         // Get the current category from the page
         const currentCategoryId = getCurrentCategoryId();
-        console.log('[Shared Draft Button] Current category:', currentCategoryId, 'Target:', componentSettings.enabled_category);
 
         // If no current category detected, don't show button
         if (!currentCategoryId) {
@@ -127,7 +92,6 @@ export default {
         // Check if current category matches the configured category
         const targetCategoryId = componentSettings.enabled_category.toString();
         const matches = currentCategoryId === targetCategoryId;
-        console.log('[Shared Draft Button] Category match:', matches);
         return matches;
       }
 
@@ -256,8 +220,6 @@ export default {
 
       // Main function to add the shared draft button
       function addSharedDraftButton() {
-        console.log('[Shared Draft Button] addSharedDraftButton called');
-
         // Check if we should show the shared draft button in this category
         const shouldShow = shouldOverrideButton();
 
@@ -266,7 +228,6 @@ export default {
 
         // If we shouldn't show but button exists, remove it and show original
         if (!shouldShow && existingSharedDraftButton) {
-          console.log('[Shared Draft Button] Removing button (not in target category)');
           removeSharedDraftButton();
           return false;
         }
@@ -284,18 +245,14 @@ export default {
 
         // If we should show and button already exists, nothing to do
         if (existingSharedDraftButton) {
-          console.log('[Shared Draft Button] Custom button already exists');
           return true;
         }
 
         // Find the original create topic button
         const createTopicButton = document.querySelector('#create-topic');
         if (!createTopicButton) {
-          console.log('[Shared Draft Button] Original button not found');
           return false;
         }
-
-        console.log('[Shared Draft Button] Adding custom button...');
 
         try {
           // Hide the original New Topic button
@@ -323,11 +280,9 @@ export default {
           // Insert the button after the original (hidden) button
           createTopicButton.parentNode.insertBefore(sharedDraftButton, createTopicButton.nextSibling);
 
-          console.log('[Shared Draft Button] Custom button added successfully');
           return true;
 
         } catch (error) {
-          console.error('[Shared Draft Button] Error adding button:', error);
           return false;
         }
       }
