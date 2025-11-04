@@ -3,17 +3,10 @@ import { withPluginApi } from "discourse/lib/plugin-api";
 export default {
   name: "shared-draft-button",
 
-  initialize(container) {
-    const settings = this.settings;
-
+  initialize() {
     withPluginApi("0.8.31", (api) => {
-      // Get the target category from settings, with fallback
-      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '170';
-
-      // Exit early if category is explicitly disabled (set to empty or "0")
-      if (TARGET_CATEGORY_ID === "" || TARGET_CATEGORY_ID === "0") {
-        return;
-      }
+      // Hardcoded category ID - change this value to switch categories
+      const TARGET_CATEGORY_ID = '167';
 
       // Function to create shared draft
       function createSharedDraft(event) {
