@@ -1,15 +1,16 @@
 import { withPluginApi } from "discourse/lib/plugin-api";
 
-// CONFIGURATION - Change this to your target category ID
-const TARGET_CATEGORY_ID = '167'; // Change to '170' for production
-
 export default {
   name: "shared-draft-button",
 
-  initialize() {
-    console.log('Shared Draft Button: Initializing for category ' + TARGET_CATEGORY_ID);
+  initialize(container) {
+    const settings = this.settings;
 
     withPluginApi("0.8.31", (api) => {
+      // Get the target category from settings, with fallback to hardcoded value
+      const TARGET_CATEGORY_ID = settings?.enabled_category?.toString() || '167';
+
+      console.log('Shared Draft Button: Initializing for category ' + TARGET_CATEGORY_ID);
 
       // Function to create shared draft
       function createSharedDraft(event) {
