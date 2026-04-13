@@ -1,10 +1,13 @@
 import { apiInitializer } from "discourse/lib/api";
+import { CREATE_SHARED_DRAFT } from "discourse/models/composer";
 
 export default apiInitializer("1.8.0", (api) => {
-  const enabledCategoryIds = settings.enabled_categories
-    .split("|")
-    .map((id) => parseInt(id, 10))
-    .filter((id) => id);
+  function getEnabledCategoryIds() {
+    return settings.enabled_categories
+      .split("|")
+      .map((id) => parseInt(id, 10))
+      .filter((id) => id);
+  }
 
   const buttonText = settings.button_text || "New Shared Draft";
 
@@ -28,7 +31,8 @@ export default apiInitializer("1.8.0", (api) => {
   }
 
   function shouldShowButton() {
-    if (enabledCategoryIds.length === 0) {
+    const ids = getEnabledCategoryIds();
+    if (ids.length === 0) {
       return false;
     }
 
@@ -40,7 +44,7 @@ export default apiInitializer("1.8.0", (api) => {
     }
 
     const currentId = getCurrentCategoryId();
-    return currentId !== null && enabledCategoryIds.includes(currentId);
+    return currentId !== null && ids.includes(currentId);
   }
 
   function openSharedDraftComposer() {
@@ -51,11 +55,13 @@ export default apiInitializer("1.8.0", (api) => {
 
     composer
       .open({
-        action: "createSharedDraft",
-        draftKey: "new_topic",
+        action: CREATE_SHARED_DRAFT,
+        draftKey: "shared_draft",
         categoryId: getCurrentCategoryId(),
       })
-      .catch(() => {});
+      .catch((err) =>
+        console.error("Failed to open shared draft composer:", err)
+      );
   }
 
   function removeSharedDraftButton() {
@@ -113,13 +119,22 @@ export default apiInitializer("1.8.0", (api) => {
     original.parentNode.insertBefore(button, original.nextSibling);
   }
 
-  function refresh() {
-    removeSharedDraftButton();
-    // Small delay to let Discourse render the #create-topic button first
-    setTimeout(addSharedDraftButton, 150);
+  let refreshTimer = null;
+
+  function scheduleRefresh(delay) {
+    if (refreshTimer) {
+      return; // already scheduled
+    }
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      addSharedDraftButton();
+    }, delay);
   }
 
-  api.onPageChange(refresh);
+  api.onPageChange(() => {
+    removeSharedDraftButton();
+    scheduleRefresh(150);
+  });
 
   // Watch for the #create-topic button being injected dynamically
   const observer = new MutationObserver((mutations) => {
@@ -132,7 +147,7 @@ export default apiInitializer("1.8.0", (api) => {
           node.id === "create-topic" ||
           node.querySelector?.("#create-topic")
         ) {
-          setTimeout(addSharedDraftButton, 50);
+          scheduleRefresh(50);
           return;
         }
       }
