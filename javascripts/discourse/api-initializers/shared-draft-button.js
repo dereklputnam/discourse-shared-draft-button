@@ -36,15 +36,12 @@ export default apiInitializer("1.8.0", (api) => {
       return false;
     }
 
-    if (settings.require_shared_drafts_enabled) {
-      const siteSettings = api.container.lookup("service:site-settings");
-      if (!siteSettings?.shared_drafts_enabled) {
-        return false;
-      }
+    const currentId = getCurrentCategoryId();
+    if (currentId === null) {
+      return false;
     }
 
-    const currentId = getCurrentCategoryId();
-    return currentId !== null && ids.includes(currentId);
+    return ids.includes(currentId);
   }
 
   function openSharedDraftComposer() {
