@@ -1,14 +1,15 @@
-enabled_category:
-  type: string
+enabled_categories:
+  type: list
+  list_type: category
   default: ""
-  description: "REQUIRED: Enter the category ID where the Shared Draft button should appear (e.g., '167'). The button will only appear when viewing this specific category."
+  description: "Choose categories where the Shared Draft button should appear instead of New Topic."
 
 button_text:
   type: string
   default: "New Shared Draft"
-  description: "Text to display on the shared draft button"
+  description: "Text to display on the shared draft button."
 
 require_shared_drafts_enabled:
   type: bool
   default: true
-  description: "Only show the button when shared drafts are enabled in site settings.\n\nConfigure shared drafts at: Admin → Site Settings → Search 'shared_drafts' or visit /admin/site_settings/category/all_results?filter=shared_drafts"
+  description: "Only show the button when shared drafts are enabled in Admin → Site Settings → shared_drafts."
