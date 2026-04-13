@@ -2,18 +2,14 @@ import { apiInitializer } from "discourse/lib/api";
 import { CREATE_SHARED_DRAFT } from "discourse/models/composer";
 
 export default apiInitializer("1.8.0", (api) => {
-  function getEnabledCategoryIds() {
-    return settings.enabled_categories
-      .split("|")
-      .map((id) => parseInt(id, 10))
-      .filter((id) => id);
-  }
-
   const buttonText = settings.button_text || "New Shared Draft";
 
-  // Get the current category ID from the URL.
-  // Discourse category URLs look like /c/slug/ID or /c/parent/child/ID —
-  // the ID is always the last numeric segment before an optional suffix.
+  // Read the shared drafts category from Discourse's own site settings
+  // rather than duplicating configuration in the theme component.
+  function getSharedDraftsCategoryId() {
+    return api.container.lookup("service:site").shared_drafts_category_id;
+  }
+
   function getCurrentCategoryId() {
     const path = window.location.pathname;
     const match = path.match(/\/c\/(?:[^/]+\/)*(\d+)(?:\/|$)/);
@@ -21,7 +17,6 @@ export default apiInitializer("1.8.0", (api) => {
       return parseInt(match[1], 10);
     }
 
-    // Fallback: data attribute set by Discourse on category pages
     const el = document.querySelector("[data-category-id]");
     if (el) {
       return parseInt(el.getAttribute("data-category-id"), 10);
@@ -31,17 +26,13 @@ export default apiInitializer("1.8.0", (api) => {
   }
 
   function shouldShowButton() {
-    const ids = getEnabledCategoryIds();
-    if (ids.length === 0) {
+    const sharedDraftsId = getSharedDraftsCategoryId();
+    if (!sharedDraftsId) {
       return false;
     }
 
     const currentId = getCurrentCategoryId();
-    if (currentId === null) {
-      return false;
-    }
-
-    return ids.includes(currentId);
+    return currentId === sharedDraftsId;
   }
 
   function openSharedDraftComposer() {
@@ -83,7 +74,7 @@ export default apiInitializer("1.8.0", (api) => {
     }
 
     if (existing) {
-      return; // already injected
+      return;
     }
 
     const original = document.querySelector("#create-topic");
@@ -91,11 +82,9 @@ export default apiInitializer("1.8.0", (api) => {
       return;
     }
 
-    // Hide the original button
     original.style.display = "none";
     original.dataset.hiddenBySharedDraft = "true";
 
-    // Clone it so we inherit all styling/classes
     const button = original.cloneNode(true);
     button.id = "create-shared-draft-button";
     button.style.display = "";
@@ -120,7 +109,7 @@ export default apiInitializer("1.8.0", (api) => {
 
   function scheduleRefresh(delay) {
     if (refreshTimer) {
-      return; // already scheduled
+      return;
     }
     refreshTimer = setTimeout(() => {
       refreshTimer = null;
@@ -133,7 +122,6 @@ export default apiInitializer("1.8.0", (api) => {
     scheduleRefresh(150);
   });
 
-  // Watch for the #create-topic button being injected dynamically
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
