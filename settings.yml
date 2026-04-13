@@ -1,4 +1,4 @@
 button_text:
   type: string
   default: "New Shared Draft"
-  description: "Text to display on the shared draft button. The button appears in the category configured at Admin → Site Settings → shared_drafts_category (/admin/site_settings/category/all_results?filter=shared_drafts_category)."
+  description: "Text to display on the shared draft button. The button appears in the category configured as <a href='/admin/site_settings/category/all_results?filter=shared_drafts_category'>shared_drafts_category</a> in site settings."
