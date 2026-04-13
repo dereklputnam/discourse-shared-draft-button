@@ -2,6 +2,12 @@ import { apiInitializer } from "discourse/lib/api";
 import { CREATE_SHARED_DRAFT } from "discourse/models/composer";
 
 export default apiInitializer("1.8.0", (api) => {
+  // Shared drafts are a staff-only feature — don't run for other users.
+  const currentUser = api.getCurrentUser();
+  if (!currentUser?.staff) {
+    return;
+  }
+
   const buttonText = settings.button_text || "New Shared Draft";
 
   // Read the shared drafts category from Discourse's own site settings
